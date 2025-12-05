@@ -2,12 +2,14 @@ import React from 'react';
 import { Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MainTabParamList } from '../types/navigation';
+import { DevTestScreen } from '../screens/DevTestScreen';
 import {
   PortfolioScreen,
   TransactionsScreen,
   LiquidityPoolsScreen,
   SettingsScreen,
 } from '../screens';
+
 import { useTheme } from '../hooks/useTheme';
 
 // ============================================
@@ -94,6 +96,17 @@ export const TabNavigator: React.FC = () => {
           ),
         }}
       />
+      <Tab.Screen
+        name="DevTest"
+        component={DevTestScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Text style={{ fontSize: size }}>🧪</Text>
+          ),
+          title: 'Dev Test',
+        }}
+      />
+
     </Tab.Navigator>
   );
 };

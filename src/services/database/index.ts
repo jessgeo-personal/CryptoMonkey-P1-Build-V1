@@ -1,21 +1,15 @@
 // ============================================
-// DATABASE MODULE EXPORTS
+// DATABASE SERVICE EXPORTS
 // ============================================
 
 export { default as DatabaseService } from './DatabaseService';
 export * from './schema';
+export * from './repositories';
 
-// Re-export for convenience
+// Convenience function for app initialization
 import DatabaseService from './DatabaseService';
-export const initializeDatabase = async (): Promise<void> => {
+
+export async function initializeDatabase(): Promise<void> {
   const dbService = DatabaseService.getInstance();
   await dbService.initialize();
-};
-
-export const getDatabase = () => {
-  return DatabaseService.getInstance().getDatabase();
-};
-
-export const isDatabaseReady = (): boolean => {
-  return DatabaseService.getInstance().isReady();
-};
+}
