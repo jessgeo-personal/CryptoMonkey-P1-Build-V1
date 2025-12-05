@@ -1,0 +1,38 @@
+// ============================================
+// NAVIGATION TYPES - Type-safe navigation
+// ============================================
+
+import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import { CompositeScreenProps } from '@react-navigation/native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+
+// Root Stack (for auth, onboarding, etc. - future use)
+export type RootStackParamList = {
+  Main: undefined;
+  // Future: Onboarding, Auth screens
+};
+
+// Main Tab Navigator
+export type MainTabParamList = {
+  Portfolio: undefined;
+  Transactions: undefined;
+  LiquidityPools: undefined;
+  Settings: undefined;
+};
+
+// Screen Props Types
+export type RootStackScreenProps<T extends keyof RootStackParamList> =
+  NativeStackScreenProps<RootStackParamList, T>;
+
+export type MainTabScreenProps<T extends keyof MainTabParamList> =
+  CompositeScreenProps<
+    BottomTabScreenProps<MainTabParamList, T>,
+    RootStackScreenProps<keyof RootStackParamList>
+  >;
+
+// Declare global navigation types for type checking
+declare global {
+  namespace ReactNavigation {
+    interface RootParamList extends RootStackParamList {}
+  }
+}

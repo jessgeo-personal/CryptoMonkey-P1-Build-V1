@@ -1,12 +1,18 @@
 import { useEffect, useState } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
 import { initializeDatabase } from './src/services/database';
-import { useTheme } from './src/hooks/useTheme';
-import { Button, Card, Badge, Input } from './src/components/common';
+import { TabNavigator } from './src/navigation';
 import { Spacing } from './src/constants/spacing';
+import { Typography } from './src/constants/typography';
 
-export default function App() {
+// ============================================
+// APP INITIALIZATION COMPONENT
+// ============================================
+
+const AppContent = () => {
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { colors, colorScheme } = useTheme();
@@ -20,7 +26,11 @@ export default function App() {
         await initializeDatabase();
         console.log('✅ Database ready');
         
+        // Simulate additional setup time
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
         setIsReady(true);
+        console.log('✅ App initialization complete');
       } catch (e) {
         console.error('❌ Initialization failed:', e);
         setError(e instanceof Error ? e.message : 'Unknown error');
@@ -33,7 +43,12 @@ export default function App() {
   if (error) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Text style={[styles.errorText, { color: colors.error }]}>Error: {error}</Text>
+        <Text style={[styles.errorText, { color: colors.error }]}>
+          ❌ Error
+        </Text>
+        <Text style={[styles.errorMessage, { color: colors.text }]}>
+          {error}
+        </Text>
         <Text style={[styles.errorSubtext, { color: colors.textSecondary }]}>
           Check console for details
         </Text>
@@ -45,9 +60,17 @@ export default function App() {
   if (!isReady) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={[styles.logo, { color: colors.text }]}>🐵</Text>
+        <Text style={[styles.loadingTitle, { color: colors.text }]}>
+          CryptoMonkey
+        </Text>
+        <ActivityIndicator
+          size="large"
+          color={colors.primary}
+          style={{ marginTop: Spacing.lg }}
+        />
         <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-          Initializing CryptoMonkey...
+          Initializing...
         </Text>
         <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
       </View>
@@ -55,86 +78,22 @@ export default function App() {
   }
 
   return (
-    <ScrollView style={{ backgroundColor: colors.background }}>
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Text style={[styles.title, { color: colors.text }]}>🐵 CryptoMonkey</Text>
-        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-          Design System Demo
-        </Text>
-        <Text style={[styles.mode, { color: colors.textSecondary }]}>
-          Mode: {colorScheme}
-        </Text>
+    <NavigationContainer>
+      <TabNavigator />
+      <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+    </NavigationContainer>
+  );
+};
 
-        {/* Badges Demo */}
-        <Card style={{ marginTop: Spacing.lg, width: '90%' }}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Badges</Text>
-          <View style={styles.badgeRow}>
-            <Badge label="Success" variant="success" style={{ marginRight: 8 }} />
-            <Badge label="Error" variant="error" style={{ marginRight: 8 }} />
-            <Badge label="Warning" variant="warning" style={{ marginRight: 8 }} />
-          </View>
-          <View style={[styles.badgeRow, { marginTop: 8 }]}>
-            <Badge label="Info" variant="info" style={{ marginRight: 8 }} />
-            <Badge label="Neutral" variant="neutral" />
-          </View>
-        </Card>
+// ============================================
+// MAIN APP COMPONENT WITH PROVIDERS
+// ============================================
 
-        {/* Buttons Demo */}
-        <Card style={{ marginTop: Spacing.base, width: '90%' }}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Buttons</Text>
-          <Button
-            title="Primary Button"
-            onPress={() => console.log('Primary pressed')}
-            variant="primary"
-            fullWidth
-          />
-          <Button
-            title="Secondary Button"
-            onPress={() => console.log('Secondary pressed')}
-            variant="secondary"
-            fullWidth
-            style={{ marginTop: 8 }}
-          />
-          <Button
-            title="Outline Button"
-            onPress={() => console.log('Outline pressed')}
-            variant="outline"
-            fullWidth
-            style={{ marginTop: 8 }}
-          />
-          <Button
-            title="Small Button"
-            onPress={() => console.log('Small pressed')}
-            size="sm"
-            style={{ marginTop: 8 }}
-          />
-        </Card>
-
-        {/* Input Demo */}
-        <Card style={{ marginTop: Spacing.base, width: '90%', marginBottom: Spacing.xl }}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Input</Text>
-          <Input
-            label="Wallet Address"
-            placeholder="0x..."
-            containerStyle={{ marginTop: 8 }}
-          />
-          <Input
-            label="Amount"
-            placeholder="0.00"
-            keyboardType="numeric"
-            containerStyle={{ marginTop: 12 }}
-          />
-          <Input
-            label="Error Example"
-            placeholder="Invalid input"
-            error="This field is required"
-            containerStyle={{ marginTop: 12 }}
-          />
-        </Card>
-
-        <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-      </View>
-    </ScrollView>
+export default function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
   );
 }
 
@@ -142,41 +101,34 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
-    padding: 20,
-    paddingTop: 60,
+    justifyContent: 'center',
+    padding: Spacing.xl,
   },
-  title: {
-    fontSize: 32,
-    fontWeight: '600',
-    marginBottom: 8,
+  logo: {
+    fontSize: 80,
+    marginBottom: Spacing.base,
   },
-  subtitle: {
-    fontSize: 18,
-    marginBottom: 4,
-  },
-  mode: {
-    fontSize: 12,
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 12,
+  loadingTitle: {
+    fontSize: Typography.fontSize['3xl'],
+    fontWeight: Typography.fontWeight.bold,
+    marginBottom: Spacing.sm,
   },
   loadingText: {
-    fontSize: 16,
-    marginTop: 16,
+    fontSize: Typography.fontSize.base,
+    marginTop: Spacing.base,
   },
   errorText: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 8,
+    fontSize: Typography.fontSize['3xl'],
+    fontWeight: Typography.fontWeight.bold,
+    marginBottom: Spacing.base,
+  },
+  errorMessage: {
+    fontSize: Typography.fontSize.base,
+    marginBottom: Spacing.sm,
+    textAlign: 'center',
   },
   errorSubtext: {
-    fontSize: 14,
-  },
-  badgeRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    fontSize: Typography.fontSize.sm,
+    textAlign: 'center',
   },
 });
