@@ -412,11 +412,11 @@ export function TransactionsScreen() {
               {tx.originalFiatValue && (
                 <View style={styles.txFooter}>
                   <Text style={[styles.txValue, { color: colors.text }]}>
-                    {formatCurrency(tx.originalFiatValue)}
+                    {formatCurrency(tx.originalFiatValue, tx.originalFiatCurrency)}
                   </Text>
                   {tx.fees.length > 0 && (
                     <Text style={[styles.txFee, { color: colors.textSecondary }]}>
-                      Fee: {formatCurrency(tx.fees[0].fiatValue)}
+                      Fee: {formatCurrency(tx.fees[0].fiatValue, tx.originalFiatCurrency)}
                     </Text>
                   )}
                 </View>
