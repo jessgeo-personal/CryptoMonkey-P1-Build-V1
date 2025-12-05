@@ -16,12 +16,11 @@ export type RootStackParamList = {
 export type MainTabParamList = {
   Dashboard: undefined;
   Transactions: undefined;
+  Holdings: undefined;
   LiquidityPools: undefined;
   Settings: undefined;
   DevTest: undefined;
 };
-
-
 
 
 // Screen Props Types

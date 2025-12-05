@@ -9,7 +9,7 @@ import {
   LiquidityPoolsScreen,
   SettingsScreen,
 } from '../screens';
-
+import { HoldingsScreen } from '../screens/HoldingsScreen';
 import { useTheme } from '../hooks/useTheme';
 
 // ============================================
@@ -74,6 +74,16 @@ export const TabNavigator: React.FC = () => {
           tabBarLabel: 'Transactions',
           tabBarIcon: ({ focused, color }) => (
             <TabBarIcon emoji="📝" focused={focused} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Holdings"
+        component={HoldingsScreen}
+        options={{
+          tabBarLabel: 'Holdings',
+          tabBarIcon: ({ focused, color }) => (
+            <TabBarIcon emoji="💎" focused={focused} color={color} />
           ),
         }}
       />
