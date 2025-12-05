@@ -36,6 +36,9 @@ export function HoldingsScreen() {
   const [sortBy, setSortBy] = useState<SortBy>('value');
   const [totalValue, setTotalValue] = useState(0);
   const [userCurrency, setUserCurrency] = useState<string>('USD');
+  const [lastUpdated, setLastUpdated] = useState<number>(Date.now());
+  const [isLoadingPrices, setIsLoadingPrices] = useState(false);
+
 
   // Mock prices (will be replaced with real API later)
   const mockPrices: { [key: string]: number } = {
@@ -79,7 +82,11 @@ export function HoldingsScreen() {
       const PriceService = (await import('../services/api/PriceService')).default;
       
       // Fetch live prices
+      setIsLoadingPrices(true);
       const prices = await PriceService.getPrices(assets, user.baseCurrency);
+      setIsLoadingPrices(false);
+      setLastUpdated(Date.now());
+
 
       let totalVal = 0;
 
@@ -205,6 +212,18 @@ export function HoldingsScreen() {
     return value.toFixed(8);
   };
 
+  /**
+   * Format time ago
+   */
+  const formatTimeAgo = (timestamp: number): string => {
+    const seconds = Math.floor((Date.now() - timestamp) / 1000);
+    
+    if (seconds < 60) return 'just now';
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+    return `${Math.floor(seconds / 86400)}d ago`;
+  };
+
   // Load holdings on mount
   useEffect(() => {
     loadHoldings();
@@ -232,9 +251,14 @@ export function HoldingsScreen() {
         <Text style={[styles.headerValue, { color: colors.text }]}>
           {formatCurrency(totalValue)}
         </Text>
-        <Text style={[styles.headerCount, { color: colors.textSecondary }]}>
-          {holdings.length} {holdings.length === 1 ? 'Asset' : 'Assets'}
-        </Text>
+        <View style={styles.headerFooter}>
+          <Text style={[styles.headerCount, { color: colors.textSecondary }]}>
+            {holdings.length} {holdings.length === 1 ? 'Asset' : 'Assets'}
+          </Text>
+          <Text style={[styles.lastUpdated, { color: colors.textSecondary }]}>
+            {isLoadingPrices ? '🔄 Updating...' : `Updated ${formatTimeAgo(lastUpdated)}`}
+          </Text>
+        </View>
       </View>
 
       {/* Sort Controls */}
@@ -459,9 +483,24 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.base,
   },
   header: {
+    backgroundColor: colors.surface,
     padding: Spacing.xl,
+    borderRadius: 12,
+    marginBottom: Spacing.lg,
     alignItems: 'center',
   },
+  headerFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    marginTop: Spacing.sm,
+  },
+  lastUpdated: {
+    fontSize: Typography.fontSize.xs,
+    fontStyle: 'italic',
+  },
+
   headerLabel: {
     fontSize: Typography.fontSize.sm,
     marginBottom: Spacing.xs,
