@@ -2,10 +2,11 @@ import { getUserRepository } from './database/repositories/UserRepository';
 import { getTransactionRepository } from './database/repositories/TransactionRepository';
 import { getHoldingRepository } from './database/repositories/HoldingRepository';
 import { PortfolioValue, Holding, SupportedCurrency } from '../types/models';
+import PriceService from './api/PriceService';
 
 // ============================================
 // PORTFOLIO SERVICE
-// Calculates portfolio values and metrics
+// Calculates portfolio values and metrics with live prices
 // ============================================
 
 export class PortfolioService {
@@ -17,23 +18,27 @@ export class PortfolioService {
       const holdingRepo = getHoldingRepository();
       const holdings = await holdingRepo.findByUserId(userId);
 
-      // Mock prices for now (will be replaced with real API later)
-      const mockPrices: { [key: string]: number } = {
-        BTC: 95000,
-        ETH: 3500,
-        USDT: 1,
-        USDC: 1,
-        SOL: 180,
-        MATIC: 0.85,
-        BNB: 620,
-        ADA: 0.45,
-      };
+      if (holdings.length === 0) {
+        return {
+          totalValue: 0,
+          totalCostBasis: 0,
+          unrealizedGainLoss: 0,
+          unrealizedPercentage: 0,
+          currency,
+        };
+      }
+
+      // Get unique assets
+      const assets = [...new Set(holdings.map(h => h.asset))];
+
+      // Fetch live prices
+      const prices = await PriceService.getPrices(assets, currency);
 
       let totalValue = 0;
       let totalCostBasis = 0;
 
       holdings.forEach(holding => {
-        const price = mockPrices[holding.asset] || 0;
+        const price = prices[holding.asset] || 0;
         const value = holding.quantity * price;
         totalValue += value;
 
@@ -65,7 +70,7 @@ export class PortfolioService {
   /**
    * Get asset breakdown with values
    */
-  async getAssetBreakdown(userId: string): Promise<Array<{
+  async getAssetBreakdown(userId: string, currency: SupportedCurrency = 'USD'): Promise<Array<{
     asset: string;
     quantity: number;
     value: number;
@@ -73,32 +78,31 @@ export class PortfolioService {
     costBasis: number;
     gainLoss: number;
     gainLossPercentage: number;
+    currentPrice: number;
   }>> {
     try {
       const holdingRepo = getHoldingRepository();
       const holdings = await holdingRepo.findByUserId(userId);
 
-      // Mock prices
-      const mockPrices: { [key: string]: number } = {
-        BTC: 95000,
-        ETH: 3500,
-        USDT: 1,
-        USDC: 1,
-        SOL: 180,
-        MATIC: 0.85,
-        BNB: 620,
-        ADA: 0.45,
-      };
+      if (holdings.length === 0) {
+        return [];
+      }
+
+      // Get unique assets
+      const assets = [...new Set(holdings.map(h => h.asset))];
+
+      // Fetch live prices
+      const prices = await PriceService.getPrices(assets, currency);
 
       let totalValue = 0;
 
       // Calculate values
       const breakdown = holdings.map(holding => {
-        const price = mockPrices[holding.asset] || 0;
+        const price = prices[holding.asset] || 0;
         const value = holding.quantity * price;
         totalValue += value;
 
-        const costBasisData = holding.costBasisData['USD'] || {
+        const costBasisData = holding.costBasisData[currency] || {
           totalCostBasis: 0,
           totalFees: 0,
           totalQuantity: 0,
@@ -106,9 +110,10 @@ export class PortfolioService {
           purchaseHistory: [],
         };
 
-        const gainLoss = value - costBasisData.totalCostBasis;
-        const gainLossPercentage = costBasisData.totalCostBasis > 0
-          ? (gainLoss / costBasisData.totalCostBasis) * 100
+        const costBasis = costBasisData.totalCostBasis;
+        const gainLoss = value - costBasis;
+        const gainLossPercentage = costBasis > 0
+          ? (gainLoss / costBasis) * 100
           : 0;
 
         return {
@@ -116,9 +121,10 @@ export class PortfolioService {
           quantity: holding.quantity,
           value,
           percentage: 0, // Will calculate after totals
-          costBasis: costBasisData.totalCostBasis,
+          costBasis,
           gainLoss,
           gainLossPercentage,
+          currentPrice: price,
         };
       });
 
@@ -153,7 +159,9 @@ export class PortfolioService {
       const holdings = await holdingRepo.findByUserId(userId);
       const txCount = await transactionRepo.countByUser(userId);
 
-      const breakdown = await this.getAssetBreakdown(userId);
+      const userRepo = getUserRepository();
+      const user = await userRepo.getOrCreateDefaultUser();
+      const breakdown = await this.getAssetBreakdown(userId, user.baseCurrency);
 
       let topGainer: string | null = null;
       let topLoser: string | null = null;

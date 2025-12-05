@@ -129,27 +129,27 @@ export function SettingsScreen() {
     );
   };
 
+
   /**
    * Show currency picker
    */
   const showCurrencyPicker = () => {
-    const buttons = SUPPORTED_CURRENCIES.map(currency => ({
-      text: `${CURRENCY_SYMBOLS[currency]} ${currency}`,
-      onPress: () => updateBaseCurrency(currency),
-    }));
-    
-    buttons.push({
-      text: 'Cancel',
-      onPress: () => {},
-    });
-
     Alert.alert(
       'Select Base Currency',
       'Choose your preferred currency for displaying values',
-      buttons
+      [
+        ...SUPPORTED_CURRENCIES.map(currency => ({
+          text: `${CURRENCY_SYMBOLS[currency]} ${currency}`,
+          onPress: () => updateBaseCurrency(currency),
+        })),
+        {
+          text: 'Cancel',
+          onPress: () => {},
+          style: 'cancel' as any, // Type assertion
+        },
+      ]
     );
   };
-
 
   // Load settings on mount
   useEffect(() => {
