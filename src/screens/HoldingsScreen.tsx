@@ -483,7 +483,6 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.base,
   },
   header: {
-    backgroundColor: colors.surface,
     padding: Spacing.xl,
     borderRadius: 12,
     marginBottom: Spacing.lg,
