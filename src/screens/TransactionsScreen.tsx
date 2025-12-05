@@ -27,6 +27,7 @@ export function TransactionsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [userCurrency, setUserCurrency] = useState<string>('USD');
   const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<FilterType>('all');
@@ -41,8 +42,9 @@ export function TransactionsScreen() {
       const transactionRepo = getTransactionRepository();
 
       const user = await userRepo.getOrCreateDefaultUser();
+      setUserCurrency(user.baseCurrency);
+      
       const txs = await transactionRepo.getRecent(user.id, 100);
-
       setTransactions(txs);
       setFilteredTransactions(txs);
     } catch (error) {
@@ -124,15 +126,24 @@ export function TransactionsScreen() {
   /**
    * Format currency
    */
-  const formatCurrency = (value: number | undefined): string => {
-    if (!value) return '$0.00';
+  const formatCurrency = (value: number | undefined, currency?: string): string => {
+    if (!value) return `${getCurrencySymbol(currency || userCurrency)}0.00`;
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD',
+      currency: currency || userCurrency,
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(value);
   };
+
+  const getCurrencySymbol = (currency: string): string => {
+    const symbols: { [key: string]: string } = {
+      USD: '$', EUR: '€', GBP: '£', AED: 'د.إ',
+      SGD: 'S$', HKD: 'HK$', INR: '₹', CNY: '¥',
+    };
+    return symbols[currency] || '$';
+  };
+
 
   /**
    * Get transaction icon

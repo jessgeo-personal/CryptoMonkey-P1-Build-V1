@@ -35,6 +35,7 @@ export function HoldingsScreen() {
   const [holdings, setHoldings] = useState<HoldingWithMetrics[]>([]);
   const [sortBy, setSortBy] = useState<SortBy>('value');
   const [totalValue, setTotalValue] = useState(0);
+  const [userCurrency, setUserCurrency] = useState<string>('USD');
 
   // Mock prices (will be replaced with real API later)
   const mockPrices: { [key: string]: number } = {
@@ -59,14 +60,36 @@ export function HoldingsScreen() {
       const holdingRepo = getHoldingRepository();
 
       const user = await userRepo.getOrCreateDefaultUser();
+      setUserCurrency(user.baseCurrency);
+      
       const rawHoldings = await holdingRepo.findByUserId(user.id);
+
+      if (rawHoldings.length === 0) {
+        setHoldings([]);
+        setTotalValue(0);
+        setLoading(false);
+        setRefreshing(false);
+        return;
+      }
+
+      // Get unique assets
+      const assets = [...new Set(rawHoldings.map(h => h.asset))];
+
+      // Import PriceService
+      const PriceService = (await import('../services/api/PriceService')).default;
+      
+      // Fetch live prices
+      const prices = await PriceService.getPrices(assets, user.baseCurrency);
+
+      let totalVal = 0;
 
       // Calculate metrics for each holding
       const holdingsWithMetrics: HoldingWithMetrics[] = rawHoldings.map(holding => {
-        const price = mockPrices[holding.asset] || 0;
+        const price = prices[holding.asset] || 0;
         const currentValue = holding.quantity * price;
+        totalVal += currentValue;
         
-        const costBasisData = holding.costBasisData['USD'] || {
+        const costBasisData = holding.costBasisData[user.baseCurrency] || {
           totalCostBasis: 0,
           totalFees: 0,
           totalQuantity: 0,
@@ -93,10 +116,7 @@ export function HoldingsScreen() {
       // Sort holdings
       const sorted = sortHoldings(holdingsWithMetrics, sortBy);
       setHoldings(sorted);
-
-      // Calculate total value
-      const total = sorted.reduce((sum, h) => sum + h.currentValue, 0);
-      setTotalValue(total);
+      setTotalValue(totalVal);
 
     } catch (error) {
       console.error('Error loading holdings:', error);
@@ -105,6 +125,7 @@ export function HoldingsScreen() {
       setRefreshing(false);
     }
   };
+
 
   /**
    * Sort holdings
@@ -156,11 +177,12 @@ export function HoldingsScreen() {
   const formatCurrency = (value: number): string => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD',
+      currency: userCurrency,
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(value);
   };
+
 
   /**
    * Format percentage

@@ -23,6 +23,7 @@ export function DashboardScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [portfolioValue, setPortfolioValue] = useState<PortfolioValue | null>(null);
+  const [userCurrency, setUserCurrency] = useState<string>('USD');
   const [assetBreakdown, setAssetBreakdown] = useState<any[]>([]);
   const [stats, setStats] = useState({
     totalAssets: 0,
@@ -38,14 +39,18 @@ export function DashboardScreen() {
     try {
       const userRepo = getUserRepository();
       const user = await userRepo.getOrCreateDefaultUser();
+    
+      // Store user currency
+      setUserCurrency(user.baseCurrency);
 
-      // Load portfolio value
-      const value = await PortfolioService.getPortfolioValue(user.id);
+      // Load portfolio value with user's currency
+      const value = await PortfolioService.getPortfolioValue(user.id, user.baseCurrency);
       setPortfolioValue(value);
 
-      // Load asset breakdown
-      const breakdown = await PortfolioService.getAssetBreakdown(user.id);
+      // Load asset breakdown with user's currency
+      const breakdown = await PortfolioService.getAssetBreakdown(user.id, user.baseCurrency);
       setAssetBreakdown(breakdown.slice(0, 5)); // Top 5 assets
+
 
       // Load stats
       const portfolioStats = await PortfolioService.getPortfolioStats(user.id);
@@ -77,12 +82,13 @@ export function DashboardScreen() {
    */
   const formatCurrency = (value: number): string => {
     return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+        style: 'currency',
+        currency: userCurrency,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
     }).format(value);
   };
+
 
   /**
    * Format percentage
