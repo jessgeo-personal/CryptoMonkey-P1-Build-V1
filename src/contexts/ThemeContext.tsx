@@ -7,8 +7,37 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // THEME CONTEXT - Manual theme control
 // ============================================
 
+// Define a common type for both light and dark colors
+type ColorPalette = {
+  background: string;
+  surface: string;
+  text: string;
+  textSecondary: string;
+  primary: string;
+  primaryHover: string;
+  primaryActive: string;
+  secondary: string;
+  secondaryHover: string;
+  secondaryActive: string;
+  success: string;
+  error: string;
+  warning: string;
+  info: string;
+  border: string;
+  cardBorder: string;
+  shadow: string;
+  bg1: string;
+  bg2: string;
+  bg3: string;
+  bg4: string;
+  bg5: string;
+  bg6: string;
+  bg7: string;
+  bg8: string;
+};
+
 interface ThemeContextType {
-  colors: typeof Colors.light;
+  colors: ColorPalette;
   colorScheme: ColorScheme;
   isDark: boolean;
   toggleTheme: () => void;
@@ -66,7 +95,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   };
 
   const activeColorScheme: ColorScheme = manualTheme || systemColorScheme || 'light';
-  const colors = Colors[activeColorScheme];
+  const colors: ColorPalette = Colors[activeColorScheme];
 
   if (isLoading) {
     return null; // or a loading spinner

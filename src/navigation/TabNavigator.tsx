@@ -1,4 +1,5 @@
 import React from 'react';
+import { Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MainTabParamList } from '../types/navigation';
 import {
@@ -9,15 +10,28 @@ import {
 } from '../screens';
 import { useTheme } from '../hooks/useTheme';
 
-// Simple icon components (using emoji for now, can replace with react-native-vector-icons later)
-const TabBarIcon = ({ emoji, focused }: { emoji: string; focused: boolean }) => {
-  return <span style={{ fontSize: 24, opacity: focused ? 1 : 0.5 }}>{emoji}</span>;
+// ============================================
+// TAB BAR ICON COMPONENT
+// ============================================
+
+interface TabBarIconProps {
+  emoji: string;
+  focused: boolean;
+  color: string;
+}
+
+const TabBarIcon: React.FC<TabBarIconProps> = ({ emoji, focused }) => {
+  return (
+    <Text style={{ fontSize: 24, opacity: focused ? 1 : 0.5 }}>
+      {emoji}
+    </Text>
+  );
 };
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 export const TabNavigator: React.FC = () => {
-  const { colors, colorScheme } = useTheme();
+  const { colors } = useTheme();
 
   return (
     <Tab.Navigator
@@ -45,7 +59,9 @@ export const TabNavigator: React.FC = () => {
         component={PortfolioScreen}
         options={{
           tabBarLabel: 'Portfolio',
-          tabBarIcon: ({ focused }) => <TabBarIcon emoji="💼" focused={focused} />,
+          tabBarIcon: ({ focused, color }) => (
+            <TabBarIcon emoji="💼" focused={focused} color={color} />
+          ),
         }}
       />
       <Tab.Screen
@@ -53,7 +69,9 @@ export const TabNavigator: React.FC = () => {
         component={TransactionsScreen}
         options={{
           tabBarLabel: 'Transactions',
-          tabBarIcon: ({ focused }) => <TabBarIcon emoji="📝" focused={focused} />,
+          tabBarIcon: ({ focused, color }) => (
+            <TabBarIcon emoji="📝" focused={focused} color={color} />
+          ),
         }}
       />
       <Tab.Screen
@@ -61,7 +79,9 @@ export const TabNavigator: React.FC = () => {
         component={LiquidityPoolsScreen}
         options={{
           tabBarLabel: 'LP Pools',
-          tabBarIcon: ({ focused }) => <TabBarIcon emoji="💧" focused={focused} />,
+          tabBarIcon: ({ focused, color }) => (
+            <TabBarIcon emoji="💧" focused={focused} color={color} />
+          ),
         }}
       />
       <Tab.Screen
@@ -69,7 +89,9 @@ export const TabNavigator: React.FC = () => {
         component={SettingsScreen}
         options={{
           tabBarLabel: 'Settings',
-          tabBarIcon: ({ focused }) => <TabBarIcon emoji="⚙️" focused={focused} />,
+          tabBarIcon: ({ focused, color }) => (
+            <TabBarIcon emoji="⚙️" focused={focused} color={color} />
+          ),
         }}
       />
     </Tab.Navigator>
