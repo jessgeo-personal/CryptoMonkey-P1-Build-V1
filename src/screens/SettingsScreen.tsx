@@ -35,7 +35,7 @@ const CURRENCY_SYMBOLS: { [key in SupportedCurrency]: string } = {
 };
 
 export function SettingsScreen() {
-  const { colors, colorScheme, toggleColorScheme } = useTheme();
+  const { colors, colorScheme, toggleTheme } = useTheme();
   const [user, setUser] = useState<User | null>(null);
   const [settings, setSettings] = useState<UserSettings | null>(null);
 
@@ -133,15 +133,23 @@ export function SettingsScreen() {
    * Show currency picker
    */
   const showCurrencyPicker = () => {
+    const buttons = SUPPORTED_CURRENCIES.map(currency => ({
+      text: `${CURRENCY_SYMBOLS[currency]} ${currency}`,
+      onPress: () => updateBaseCurrency(currency),
+    }));
+    
+    buttons.push({
+      text: 'Cancel',
+      onPress: () => {},
+    });
+
     Alert.alert(
       'Select Base Currency',
       'Choose your preferred currency for displaying values',
-      SUPPORTED_CURRENCIES.map(currency => ({
-        text: `${CURRENCY_SYMBOLS[currency]} ${currency}`,
-        onPress: () => updateBaseCurrency(currency),
-      })).concat([{ text: 'Cancel', style: 'cancel' }])
+      buttons
     );
   };
+
 
   // Load settings on mount
   useEffect(() => {
@@ -190,7 +198,7 @@ export function SettingsScreen() {
           </View>
           <Switch
             value={colorScheme === 'dark'}
-            onValueChange={toggleColorScheme}
+            onValueChange={toggleTheme}
             trackColor={{ false: colors.border, true: colors.primary }}
             thumbColor="#FFFFFF"
           />
