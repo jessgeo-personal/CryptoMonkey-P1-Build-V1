@@ -15,13 +15,12 @@ export type RootStackParamList = {
 // Main Tab Navigator
 export type MainTabParamList = {
   Dashboard: undefined;
-  Portfolio: undefined;
   Transactions: undefined;
-  Holdings: undefined;
   LiquidityPools: undefined;
   Settings: undefined;
   DevTest: undefined;
 };
+
 
 
 

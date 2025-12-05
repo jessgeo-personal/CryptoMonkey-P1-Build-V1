@@ -4,7 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MainTabParamList } from '../types/navigation';
 import { DevTestScreen } from '../screens/DevTestScreen';
 import {
-  PortfolioScreen,
+  DashboardScreen,
   TransactionsScreen,
   LiquidityPoolsScreen,
   SettingsScreen,
@@ -57,15 +57,16 @@ export const TabNavigator: React.FC = () => {
       }}
     >
       <Tab.Screen
-        name="Portfolio"
-        component={PortfolioScreen}
+        name="Dashboard"
+        component={DashboardScreen}
         options={{
-          tabBarLabel: 'Portfolio',
+          tabBarLabel: 'Dashboard',
           tabBarIcon: ({ focused, color }) => (
-            <TabBarIcon emoji="💼" focused={focused} color={color} />
+            <TabBarIcon emoji="📊" focused={focused} color={color} />
           ),
         }}
       />
+
       <Tab.Screen
         name="Transactions"
         component={TransactionsScreen}

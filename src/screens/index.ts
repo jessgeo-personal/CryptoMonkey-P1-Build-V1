@@ -2,7 +2,7 @@
 // SCREENS MODULE EXPORTS
 // ============================================
 
-export * from './PortfolioScreen';
+export { DashboardScreen } from './DashboardScreen';
 export * from './TransactionsScreen';
 export * from './LiquidityPoolsScreen';
 export * from './SettingsScreen';
