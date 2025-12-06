@@ -11,6 +11,7 @@ import {
   ImportScreen,
   ImportConfirmationScreen,
   ColumnMappingScreen,
+  ManualTransactionScreen,
 } from '../screens';
 import { HoldingsScreen } from '../screens/HoldingsScreen';
 import { useTheme } from '../hooks/useTheme';
@@ -149,6 +150,16 @@ export const TabNavigator: React.FC = () => {
           title: 'Confirm Import',
         }}
       />
+      <Tab.Screen
+        name="ManualTransaction"
+        component={ManualTransactionScreen}
+        options={{
+          tabBarButton: () => null, // Hide from tab bar
+          headerShown: true,
+          title: 'Add Transaction',
+        }}
+      />
+
     </Tab.Navigator>
   );
 };

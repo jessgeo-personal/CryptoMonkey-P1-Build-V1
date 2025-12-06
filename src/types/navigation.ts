@@ -31,7 +31,9 @@ export type MainTabParamList = {
     fileName: string;
     summary: any;
   };
+  ManualTransaction: undefined;
 };
+
 
 
 

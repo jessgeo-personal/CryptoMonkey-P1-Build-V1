@@ -250,14 +250,25 @@ export function TransactionsScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Import Button */}
-      <TouchableOpacity
-        style={[styles.importButton, { backgroundColor: colors.primary }]}
-        onPress={() => navigation.navigate('Import')}
-      >
-        <Text style={styles.importButtonIcon}>📥</Text>
-        <Text style={styles.importButtonText}>Import CSV</Text>
-      </TouchableOpacity>
+      {/* Action Buttons Row */}
+      <View style={styles.actionButtonsRow}>
+        <TouchableOpacity
+          style={[styles.importButton, { backgroundColor: colors.primary, flex: 1 }]}
+          onPress={() => navigation.navigate('Import')}
+        >
+          <Text style={styles.importButtonIcon}>📥</Text>
+          <Text style={styles.importButtonText}>Import CSV</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.addManualButton, { backgroundColor: '#4CAF50', flex: 1, marginLeft: 8 }]}
+          onPress={() => navigation.navigate('ManualTransaction')}
+        >
+          <Text style={styles.addManualButtonIcon}>➕</Text>
+          <Text style={styles.addManualButtonText}>Add Manual</Text>
+        </TouchableOpacity>
+      </View>
+
      
       {/* Search Bar */}
       <View style={[styles.searchContainer, { backgroundColor: colors.surface }]}>
@@ -693,6 +704,28 @@ const styles = StyleSheet.create({
   },
   deleteIcon: {
     fontSize: 18,
+  },
+  actionButtonsRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    marginHorizontal: Spacing.base,
+    marginVertical: Spacing.base,
+  },
+  addManualButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.base,
+    borderRadius: 12,
+    gap: Spacing.sm,
+  },
+  addManualButtonIcon: {
+    fontSize: 20,
+  },
+  addManualButtonText: {
+    color: '#FFFFFF',
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.semibold,
   },
 
 });
