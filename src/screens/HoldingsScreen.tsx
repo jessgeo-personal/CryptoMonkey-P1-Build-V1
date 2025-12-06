@@ -7,7 +7,9 @@ import {
   RefreshControl,
   TouchableOpacity,
 } from 'react-native';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
+import type { MainTabParamList } from '../types/navigation';
 import { Spacing } from '../constants/spacing';
 import { Typography } from '../constants/typography';
 import { getUserRepository } from '../services/database/repositories/UserRepository';
@@ -30,6 +32,7 @@ interface HoldingWithMetrics extends Holding {
 
 export function HoldingsScreen() {
   const { colors } = useTheme();
+  const navigation = useNavigation<NavigationProp<MainTabParamList>>();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [holdings, setHoldings] = useState<HoldingWithMetrics[]>([]);
@@ -367,14 +370,22 @@ export function HoldingsScreen() {
           </View>
         ) : (
           holdings.map((holding, index) => (
-            <View
+            <TouchableOpacity
               key={holding.id}
-              style={[
-                styles.holdingCard,
-                { backgroundColor: colors.surface },
-                index === 0 && styles.firstCard,
-              ]}
+              onPress={() =>
+                navigation.navigate('HoldingDetail' as any, {
+                  asset: holding.asset,
+                  currentPrice: holding.currentPrice,
+                })
+              }
             >
+              <View
+                style={[
+                  styles.holdingCard,
+                  { backgroundColor: colors.surface },
+                  index === 0 && styles.firstCard,
+                ]}
+              >
               {/* Header */}
               <View style={styles.cardHeader}>
                 <View style={styles.assetInfo}>
@@ -463,6 +474,7 @@ export function HoldingsScreen() {
                 </View>
               </View>
             </View>
+          </TouchableOpacity>  
           ))
         )}
       </ScrollView>
@@ -633,4 +645,5 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.base,
     textAlign: 'center',
   },
+
 });

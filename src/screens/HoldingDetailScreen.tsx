@@ -16,20 +16,13 @@ import { getUserRepository } from '../services/database/repositories/UserReposit
 import { HoldingMetrics } from '../types/holding.types';
 import type { MainTabParamList } from '../types/navigation';
 
-type HoldingDetailRouteProp = RouteProp<MainTabParamList, 'HoldingDetail'> | undefined;
-
-interface HoldingDetailParams {
-  asset: string;
-  currentPrice: number;
-}
+type HoldingDetailRouteProp = RouteProp<MainTabParamList, 'HoldingDetail'>;
 
 export const HoldingDetailScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute<HoldingDetailRouteProp>();
   
-  const params = (route.params as HoldingDetailParams) || { asset: '', currentPrice: 0 };
-  const { asset, currentPrice } = params;
-
+  const { asset, currentPrice } = route.params;
 
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState<HoldingMetrics | null>(null);

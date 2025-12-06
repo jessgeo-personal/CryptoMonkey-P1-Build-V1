@@ -9,9 +9,9 @@ import {
   LiquidityPoolsScreen,
   SettingsScreen,
   ImportScreen,
-  ImportConfirmationScreen,
   ColumnMappingScreen,
   ManualTransactionScreen,
+  HoldingDetailScreen,
 } from '../screens';
 import { HoldingsScreen } from '../screens/HoldingsScreen';
 import { useTheme } from '../hooks/useTheme';
@@ -159,7 +159,15 @@ export const TabNavigator: React.FC = () => {
           title: 'Add Transaction',
         }}
       />
-
+      <Tab.Screen
+        name="HoldingDetail"
+        component={HoldingDetailScreen}
+        options={{
+          tabBarButton: () => null, // Hide from tab bar
+          headerShown: true,
+          title: 'Holding Details',
+        }}
+      />
     </Tab.Navigator>
   );
 };

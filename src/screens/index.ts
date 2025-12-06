@@ -12,6 +12,8 @@ export { ImportScreen } from './ImportScreen';
 export { ColumnMappingScreen } from './ColumnMappingScreen';
 export { ImportConfirmationScreen } from './ImportConfirmationScreen';
 export { ManualTransactionScreen } from './ManualTransactionScreen';
+export { HoldingDetailScreen } from './HoldingDetailScreen';
+
 
 
 
