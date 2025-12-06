@@ -32,7 +32,12 @@ export type MainTabParamList = {
     summary: any;
   };
   ManualTransaction: undefined;
+  HoldingDetail: {
+    asset: string;
+    currentPrice: number;
+  };
 };
+
 
 
 
