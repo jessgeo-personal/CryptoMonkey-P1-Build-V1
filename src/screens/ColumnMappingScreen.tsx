@@ -8,7 +8,7 @@ import {
   Alert,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp, NavigationProp } from '@react-navigation/native';
 import { getTransactionImportService } from '../services/import/TransactionImportService';
 import { ColumnMappingRow } from '../components/ColumnMappingRow';
 import { MappedDataPreview } from '../components/MappedDataPreview';
@@ -23,6 +23,7 @@ export const ColumnMappingScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute<ColumnMappingRouteProp>();
   const { headers, data, fileName } = route.params;
+  const [sourceLocation, setSourceLocation] = useState<string>('WALLET');
 
   const [mappings, setMappings] = useState<Partial<CSVColumnMapping>>({});
   const [mappedTransactions, setMappedTransactions] = useState<ParsedTransaction[]>([]);
@@ -111,8 +112,6 @@ export const ColumnMappingScreen: React.FC = () => {
            (errors.length === 0 || hasOnlyWarnings());
   };
 
-  const [sourceLocation, setSourceLocation] = useState<string>('WALLET');
-
   const proceedToImport = () => {
     if (!canProceed()) {
       Alert.alert(
@@ -128,13 +127,14 @@ export const ColumnMappingScreen: React.FC = () => {
     const summary = importService.generateSummary(mappedTransactions);
 
     // Navigate to confirmation
-    navigation.navigate('ImportConfirmation', {
+    navigation.navigate('ImportConfirmation' as any, {
       parsedTransactions: mappedTransactions,
-      fileName: route.params.fileName,
+      fileName: fileName || 'unknown.csv',
       summary,
       sourceLocation,
     });
   };
+
 
 
   const errorCount = errors.filter(e => e.severity === 'error').length;
@@ -309,7 +309,7 @@ export const ColumnMappingScreen: React.FC = () => {
           <View style={styles.pickerWrapper}>
             <Picker
               selectedValue={sourceLocation}
-              onValueChange={setSourceLocation}
+              onValueChange={(value) => setSourceLocation(value)}
               style={styles.locationPicker}
             >
               <Picker.Item label="Wallet" value="WALLET" />
@@ -319,6 +319,7 @@ export const ColumnMappingScreen: React.FC = () => {
             </Picker>
           </View>
         </View>
+
 
         {/* Action Buttons */}
         <View style={styles.actionButtons}>

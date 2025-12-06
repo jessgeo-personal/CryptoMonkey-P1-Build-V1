@@ -8,7 +8,7 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp, NavigationProp } from '@react-navigation/native';
 import { ParsedTransaction, ImportSource, ImportSummary } from '../types/import.types';
 import { getTransactionImportService } from '../services/import/TransactionImportService';
 import { getUserRepository } from '../services/database/repositories/UserRepository';
@@ -16,10 +16,19 @@ import type { MainTabParamList } from '../types/navigation';
 
 type ImportConfirmationRouteProp = RouteProp<MainTabParamList, 'ImportConfirmation'>;
 
+interface ImportConfirmationParams {
+  parsedTransactions: ParsedTransaction[];
+  fileName: string;
+  summary: ImportSummary;
+  sourceLocation: string;
+}
+
 export const ImportConfirmationScreen: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp<MainTabParamList>>();
   const route = useRoute<ImportConfirmationRouteProp>();
-  const { parsedTransactions, fileName, summary, sourceLocation } = route.params;
+  
+  const params = route.params as ImportConfirmationParams;
+  const { parsedTransactions, fileName, summary, sourceLocation } = params;
 
   const [isImporting, setIsImporting] = useState(false);
   const importService = getTransactionImportService();
@@ -57,7 +66,7 @@ export const ImportConfirmationScreen: React.FC = () => {
             {
               text: 'View Transactions',
               onPress: () => {
-                navigation.navigate('Transactions');
+                navigation.navigate('Transactions' as any);
               },
             },
           ]
@@ -73,7 +82,7 @@ export const ImportConfirmationScreen: React.FC = () => {
         // Partial or complete failure
         const errorMessage = result.errors
           .slice(0, 3)
-          .map(e => `Row ${e.rowNumber}: ${e.error}`)
+          .map((e: any) => `Row ${e.rowNumber}: ${e.error}`)
           .join('\n');
 
         Alert.alert(
@@ -84,7 +93,7 @@ export const ImportConfirmationScreen: React.FC = () => {
           [
             {
               text: 'View Transactions',
-              onPress: () => navigation.navigate('Transactions'),
+              onPress: () => navigation.navigate('Transactions' as any),
             },
             {
               text: 'Back to Mapping',
@@ -102,6 +111,7 @@ export const ImportConfirmationScreen: React.FC = () => {
       );
     }
   };
+
 
   return (
     <ScrollView style={styles.container}>
@@ -171,7 +181,7 @@ export const ImportConfirmationScreen: React.FC = () => {
               {summary.duplicateWarnings.length} potential duplicate transactions detected.
               These will be imported anyway in this phase.
             </Text>
-            {summary.duplicateWarnings.slice(0, 3).map((warning, index) => (
+            {summary.duplicateWarnings.slice(0, 3).map((warning: any, index: number) => (
               <View key={index} style={styles.warningItem}>
                 <Text style={styles.warningItemText}>
                   Row {warning.csvRow}: {warning.csvData.assetSymbol} ×{' '}
@@ -186,6 +196,7 @@ export const ImportConfirmationScreen: React.FC = () => {
             )}
           </View>
         )}
+
 
         {/* Fee Calculation Note */}
         <View style={styles.noteCard}>

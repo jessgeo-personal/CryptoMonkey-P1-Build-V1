@@ -1,4 +1,5 @@
 import { ParsedTransaction } from './csv.types';
+import { Transaction } from './models';
 
 export interface ImportSource {
   type: 'WALLET' | 'CEX' | 'DEFI' | 'OTHER';
