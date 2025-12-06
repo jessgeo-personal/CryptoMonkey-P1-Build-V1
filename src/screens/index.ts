@@ -10,5 +10,7 @@ export * from './SettingsScreen';
 export { DevTestScreen } from './DevTestScreen';
 export { ImportScreen } from './ImportScreen';
 export { ColumnMappingScreen } from './ColumnMappingScreen';
+export { ImportConfirmationScreen } from './ImportConfirmationScreen';
+
 
 

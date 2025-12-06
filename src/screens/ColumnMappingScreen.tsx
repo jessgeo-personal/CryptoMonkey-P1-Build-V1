@@ -7,7 +7,9 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { getTransactionImportService } from '../services/import/TransactionImportService';
 import { ColumnMappingRow } from '../components/ColumnMappingRow';
 import { MappedDataPreview } from '../components/MappedDataPreview';
 import { detectColumnMappings } from '../utils/csvParser';
@@ -109,6 +111,8 @@ export const ColumnMappingScreen: React.FC = () => {
            (errors.length === 0 || hasOnlyWarnings());
   };
 
+  const [sourceLocation, setSourceLocation] = useState<string>('WALLET');
+
   const proceedToImport = () => {
     if (!canProceed()) {
       Alert.alert(
@@ -119,13 +123,19 @@ export const ColumnMappingScreen: React.FC = () => {
       return;
     }
 
-    // TODO: Navigate to import confirmation screen (Mini-Phase 2C4)
-    Alert.alert(
-      'Ready to Import',
-      `${mappedTransactions.length} transactions are ready to be imported.\n\nImport functionality will be implemented in the next phase.`,
-      [{ text: 'OK' }]
-    );
+    // Generate import summary
+    const importService = getTransactionImportService();
+    const summary = importService.generateSummary(mappedTransactions);
+
+    // Navigate to confirmation
+    navigation.navigate('ImportConfirmation', {
+      parsedTransactions: mappedTransactions,
+      fileName: route.params.fileName,
+      summary,
+      sourceLocation,
+    });
   };
+
 
   const errorCount = errors.filter(e => e.severity === 'error').length;
   const warningCount = errors.filter(e => e.severity === 'warning').length;
@@ -293,6 +303,23 @@ export const ColumnMappingScreen: React.FC = () => {
           <MappedDataPreview transactions={mappedTransactions} maxRows={3} />
         )}
 
+        {/* Source Location Selector */}
+        <View style={styles.sourceLocationContainer}>
+          <Text style={styles.sectionTitle}>Source Location</Text>
+          <View style={styles.pickerWrapper}>
+            <Picker
+              selectedValue={sourceLocation}
+              onValueChange={setSourceLocation}
+              style={styles.locationPicker}
+            >
+              <Picker.Item label="Wallet" value="WALLET" />
+              <Picker.Item label="CEX (Exchange)" value="CEX" />
+              <Picker.Item label="DeFi Protocol" value="DEFI" />
+              <Picker.Item label="Other" value="OTHER" />
+            </Picker>
+          </View>
+        </View>
+
         {/* Action Buttons */}
         <View style={styles.actionButtons}>
           <TouchableOpacity
@@ -450,4 +477,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
+    sourceLocationContainer: {
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  pickerWrapper: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 6,
+    overflow: 'hidden',
+    marginTop: 8,
+  },
+  locationPicker: {
+    height: 50,
+  },
+
 });

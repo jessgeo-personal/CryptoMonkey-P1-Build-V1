@@ -9,10 +9,13 @@ import {
   LiquidityPoolsScreen,
   SettingsScreen,
   ImportScreen,
+  ImportConfirmationScreen,
   ColumnMappingScreen,
 } from '../screens';
 import { HoldingsScreen } from '../screens/HoldingsScreen';
 import { useTheme } from '../hooks/useTheme';
+
+
 
 // ============================================
 // TAB BAR ICON COMPONENT
@@ -135,6 +138,15 @@ export const TabNavigator: React.FC = () => {
           tabBarButton: () => null, // Hide from tab bar
           headerShown: true,
           title: 'Map Columns',
+        }}
+      />
+      <Tab.Screen
+        name="ImportConfirmation"
+        component={ImportConfirmationScreen}
+        options={{
+          tabBarButton: () => null, // Hide from tab bar
+          headerShown: true,
+          title: 'Confirm Import',
         }}
       />
     </Tab.Navigator>

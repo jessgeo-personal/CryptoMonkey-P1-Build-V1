@@ -207,17 +207,28 @@ class TransactionRepository extends BaseRepository<Transaction> {
     return result.changes;
   }
 
-  /**
+    /**
    * Batch insert transactions
+   * @returns Number of transactions successfully inserted
    */
-  async batchCreate(transactions: Transaction[]): Promise<void> {
-    await this.transaction(async (db) => {
-      for (const transaction of transactions) {
-        await this.create(transaction);
-      }
-    });
-    console.log(`✅ Batch created ${transactions.length} transactions`);
+  async batchCreate(transactions: Transaction[]): Promise<number> {
+    let insertedCount = 0;
+    
+    try {
+      await this.transaction(async (db) => {
+        for (const transaction of transactions) {
+          await this.create(transaction);
+          insertedCount++;
+        }
+      });
+      console.log(`✅ Batch created ${insertedCount}/${transactions.length} transactions`);
+      return insertedCount;
+    } catch (error) {
+      console.error(`❌ Batch creation failed after ${insertedCount} transactions:`, error);
+      throw error;
+    }
   }
+
 
   /**
    * Get transaction by ID with parsed data

@@ -26,7 +26,13 @@ export type MainTabParamList = {
     data: any[];
     fileName: string;
   };
+  ImportConfirmation: {
+    parsedTransactions: any[];
+    fileName: string;
+    summary: any;
+  };
 };
+
 
 
 // Screen Props Types
