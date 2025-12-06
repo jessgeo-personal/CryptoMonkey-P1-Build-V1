@@ -207,6 +207,22 @@ class TransactionRepository extends BaseRepository<Transaction> {
     return result.changes;
   }
 
+  /**
+   * Delete a single transaction
+   */
+  async deleteTransaction(transactionId: string, userId: string): Promise<boolean> {
+    const sql = `DELETE FROM transactions WHERE id = ? AND user_id = ?`;
+    const result = await this.executeStatement(sql, [transactionId, userId]);
+    
+    if (result.changes > 0) {
+      console.log(`✅ Transaction deleted: ${transactionId}`);
+      return true;
+    }
+    
+    console.warn(`⚠️ Transaction not found for deletion: ${transactionId}`);
+    return false;
+  }
+
     /**
    * Batch insert transactions
    * @returns Number of transactions successfully inserted

@@ -7,6 +7,7 @@ import {
   RefreshControl,
   TouchableOpacity,
   TextInput,
+  Alert,
 } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import { useNavigation } from '@react-navigation/native';
@@ -95,6 +96,8 @@ export function TransactionsScreen() {
     setFilteredTransactions(filtered);
   };
 
+
+
   /**
    * Handle refresh
    */
@@ -145,6 +148,49 @@ export function TransactionsScreen() {
       SGD: 'S$', HKD: 'HK$', INR: '₹', CNY: '¥',
     };
     return symbols[currency] || '$';
+  };
+
+    /**
+   * Handle transaction deletion with confirmation
+   */
+  const handleDeleteTransaction = (transactionId: string) => {
+    Alert.alert(
+      'Delete Transaction',
+      'Are you sure you want to delete this transaction? This action cannot be undone.',
+      [
+        {
+          text: 'Cancel',
+          onPress: () => {},
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          onPress: async () => {
+            try {
+              const userRepo = getUserRepository();
+              const user = await userRepo.getOrCreateDefaultUser();
+              const transactionRepo = getTransactionRepository();
+              
+              const deleted = await transactionRepo.deleteTransaction(transactionId, user.id);
+              
+              if (deleted) {
+                // Remove from local state
+                setTransactions(prev => prev.filter(tx => tx.id !== transactionId));
+                setFilteredTransactions(prev => prev.filter(tx => tx.id !== transactionId));
+                
+                Alert.alert('✅ Deleted', 'Transaction deleted successfully');
+              } else {
+                Alert.alert('❌ Error', 'Could not delete transaction');
+              }
+            } catch (error) {
+              Alert.alert('❌ Error', 'Failed to delete transaction');
+              console.error('Delete error:', error);
+            }
+          },
+          style: 'destructive',
+        },
+      ]
+    );
   };
 
 
@@ -364,7 +410,7 @@ export function TransactionsScreen() {
                 index === 0 && styles.firstCard,
               ]}
             >
-              {/* Header */}
+            {/* Header */}
               <View style={styles.txHeader}>
                 <View style={styles.txHeaderLeft}>
                   <Text style={styles.txIcon}>
@@ -386,14 +432,24 @@ export function TransactionsScreen() {
                 </View>
 
                 <View style={styles.txHeaderRight}>
-                  <Text style={[styles.txDate, { color: colors.text }]}>
-                    {formatDate(tx.timestamp)}
-                  </Text>
-                  <Text style={[styles.txTime, { color: colors.textSecondary }]}>
-                    {formatTime(tx.timestamp)}
-                  </Text>
+                  <View style={styles.txDateTimeContainer}>
+                    <Text style={[styles.txDate, { color: colors.text }]}>
+                      {formatDate(tx.timestamp)}
+                    </Text>
+                    <Text style={[styles.txTime, { color: colors.textSecondary }]}>
+                      {formatTime(tx.timestamp)}
+                    </Text>
+                  </View>
+                  
+                  <TouchableOpacity
+                    style={styles.deleteButton}
+                    onPress={() => handleDeleteTransaction(tx.id)}
+                  >
+                    <Text style={styles.deleteIcon}>🗑️</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
+
 
               {/* Assets */}
               <View style={styles.txAssets}>
@@ -556,7 +612,9 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.xs,
   },
   txHeaderRight: {
-    alignItems: 'flex-end',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
   },
   txDate: {
     fontSize: Typography.fontSize.sm,
@@ -625,4 +683,16 @@ const styles = StyleSheet.create({
   statsText: {
     fontSize: Typography.fontSize.sm,
   },
+  txDateTimeContainer: {
+    alignItems: 'flex-end',
+    marginRight: Spacing.sm,
+  },
+  deleteButton: {
+    padding: Spacing.sm,
+    marginLeft: Spacing.sm,
+  },
+  deleteIcon: {
+    fontSize: 18,
+  },
+
 });
