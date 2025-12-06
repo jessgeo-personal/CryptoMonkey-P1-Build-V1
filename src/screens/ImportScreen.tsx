@@ -22,17 +22,32 @@ export const ImportScreen: React.FC = () => {
   const pickDocument = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: 'text/csv',
+        type: ['text/csv', 'text/comma-separated-values', 'application/csv', 'text/plain', '*/*'],
         copyToCacheDirectory: true,
+        multiple: false,
       });
+
 
       if (result.canceled) {
         return;
       }
 
       const file = result.assets[0];
+      
+      // Validate file extension
+      const fileName = file.name.toLowerCase();
+      if (!fileName.endsWith('.csv') && !fileName.endsWith('.txt')) {
+        Alert.alert(
+          'Invalid File Type',
+          'Please select a CSV file (.csv or .txt)',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+      
       setFileName(file.name);
       setIsLoading(true);
+
       setErrors([]);
 
       // Read file content
@@ -60,9 +75,19 @@ export const ImportScreen: React.FC = () => {
       setIsLoading(false);
     } catch (error) {
       setIsLoading(false);
-      Alert.alert('Error', 'Failed to read CSV file');
+      
+      // Detailed error logging
       console.error('Document picker error:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
+      
+      const errorMessage = error instanceof Error ? error.message : 'Failed to read CSV file';
+      Alert.alert(
+        'Error',
+        `Could not read file: ${errorMessage}`,
+        [{ text: 'OK' }]
+      );
     }
+
   };
 
   const clearImport = () => {

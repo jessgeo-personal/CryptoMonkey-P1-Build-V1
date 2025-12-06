@@ -13,6 +13,7 @@ export type RootStackParamList = {
 };
 
 // Main Tab Navigator
+// Main Tab Navigator
 export type MainTabParamList = {
   Dashboard: undefined;
   Transactions: undefined;
@@ -20,7 +21,9 @@ export type MainTabParamList = {
   LiquidityPools: undefined;
   Settings: undefined;
   DevTest: undefined;
+  Import: undefined;
 };
+
 
 
 // Screen Props Types

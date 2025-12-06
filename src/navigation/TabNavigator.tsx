@@ -8,6 +8,7 @@ import {
   TransactionsScreen,
   LiquidityPoolsScreen,
   SettingsScreen,
+  ImportScreen,
 } from '../screens';
 import { HoldingsScreen } from '../screens/HoldingsScreen';
 import { useTheme } from '../hooks/useTheme';
@@ -117,7 +118,15 @@ export const TabNavigator: React.FC = () => {
           title: 'Dev Test',
         }}
       />
-
+      <Tab.Screen
+        name="Import"
+        component={ImportScreen}
+        options={{
+          tabBarButton: () => null, // Hide from tab bar
+          headerShown: true,
+          title: 'Import CSV',
+        }}
+      />
     </Tab.Navigator>
   );
 };

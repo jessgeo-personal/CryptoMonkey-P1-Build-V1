@@ -9,6 +9,8 @@ import {
   TextInput,
 } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
+import { useNavigation } from '@react-navigation/native';
+import type { MainTabScreenProps } from '../types/navigation';
 import { Spacing } from '../constants/spacing';
 import { Typography } from '../constants/typography';
 import { getUserRepository } from '../services/database/repositories/UserRepository';
@@ -24,6 +26,7 @@ type FilterSource = 'all' | TransactionSource;
 
 export function TransactionsScreen() {
   const { colors } = useTheme();
+  const navigation = useNavigation<MainTabScreenProps<'Transactions'>['navigation']>();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -201,6 +204,15 @@ export function TransactionsScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Import Button */}
+      <TouchableOpacity
+        style={[styles.importButton, { backgroundColor: colors.primary }]}
+        onPress={() => navigation.navigate('Import')}
+      >
+        <Text style={styles.importButtonIcon}>📥</Text>
+        <Text style={styles.importButtonText}>Import CSV</Text>
+      </TouchableOpacity>
+     
       {/* Search Bar */}
       <View style={[styles.searchContainer, { backgroundColor: colors.surface }]}>
         <Text style={styles.searchIcon}>🔍</Text>
@@ -442,6 +454,24 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  importButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.base,
+    margin: Spacing.base,
+    borderRadius: 12,
+    gap: Spacing.sm,
+  },
+  importButtonIcon: {
+    fontSize: 20,
+  },
+  importButtonText: {
+    color: '#FFFFFF',
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.semibold,
+  },
+
   centered: {
     flex: 1,
     alignItems: 'center',
