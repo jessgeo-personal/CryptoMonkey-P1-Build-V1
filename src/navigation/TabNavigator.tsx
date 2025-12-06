@@ -9,6 +9,7 @@ import {
   LiquidityPoolsScreen,
   SettingsScreen,
   ImportScreen,
+  ColumnMappingScreen,
 } from '../screens';
 import { HoldingsScreen } from '../screens/HoldingsScreen';
 import { useTheme } from '../hooks/useTheme';
@@ -125,6 +126,15 @@ export const TabNavigator: React.FC = () => {
           tabBarButton: () => null, // Hide from tab bar
           headerShown: true,
           title: 'Import CSV',
+        }}
+      />
+      <Tab.Screen
+        name="ColumnMapping"
+        component={ColumnMappingScreen}
+        options={{
+          tabBarButton: () => null, // Hide from tab bar
+          headerShown: true,
+          title: 'Map Columns',
         }}
       />
     </Tab.Navigator>

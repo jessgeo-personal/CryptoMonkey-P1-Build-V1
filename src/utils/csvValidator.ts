@@ -15,11 +15,36 @@ export function validateDate(dateString: string): { isValid: boolean; isoDate?: 
   }
 
   try {
-    // Try parsing common date formats
-    const parsed = new Date(dateString);
+    const trimmed = dateString.trim();
     
-    if (isNaN(parsed.getTime())) {
-      return { isValid: false, error: 'Invalid date format' };
+    // Try multiple date formats
+    let parsed: Date | null = null;
+
+    // Format 1: ISO (YYYY-MM-DD, YYYY-MM-DDTHH:mm:ss)
+    if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) {
+      parsed = new Date(trimmed);
+    }
+    // Format 2: US (MM/DD/YYYY or M/D/YYYY)
+    else if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(trimmed)) {
+      const [month, day, year] = trimmed.split('/');
+      parsed = new Date(`${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`);
+    }
+    // Format 3: EU (DD/MM/YYYY or D/M/YYYY)
+    else if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(trimmed)) {
+      const [day, month, year] = trimmed.split('-');
+      parsed = new Date(`${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`);
+    }
+    // Format 4: Text format (DD-MMM-YYYY or D-MMM-YYYY)
+    else if (/^\d{1,2}-[A-Za-z]{3}-\d{4}$/.test(trimmed)) {
+      parsed = new Date(trimmed);
+    }
+    // Format 5: Let JavaScript try to parse it
+    else {
+      parsed = new Date(trimmed);
+    }
+    
+    if (!parsed || isNaN(parsed.getTime())) {
+      return { isValid: false, error: `Cannot parse date: ${dateString}` };
     }
 
     return { isValid: true, isoDate: parsed.toISOString() };
@@ -27,6 +52,7 @@ export function validateDate(dateString: string): { isValid: boolean; isoDate?: 
     return { isValid: false, error: 'Failed to parse date' };
   }
 }
+
 
 /**
  * Validates transaction type

@@ -12,9 +12,14 @@ import * as DocumentPicker from 'expo-document-picker';
 import { CSVPreview } from '../components/CSVPreview';
 import { parseCSVContent, validateCSVStructure } from '../utils/csvParser';
 import { CSVParseResult, CSVError } from '../types/csv.types';
+import { useNavigation } from '@react-navigation/native';
+import type { MainTabScreenProps } from '../types/navigation';
+
 
 export const ImportScreen: React.FC = () => {
+  const navigation = useNavigation<MainTabScreenProps<'Import'>['navigation']>();
   const [isLoading, setIsLoading] = useState(false);
+
   const [fileName, setFileName] = useState<string | null>(null);
   const [parseResult, setParseResult] = useState<CSVParseResult | null>(null);
   const [errors, setErrors] = useState<CSVError[]>([]);
@@ -97,9 +102,15 @@ export const ImportScreen: React.FC = () => {
   };
 
   const proceedToMapping = () => {
-    // TODO: Navigate to column mapping screen (Mini-Phase 2C3)
-    Alert.alert('Coming Soon', 'Column mapping will be implemented in the next phase');
+    if (!parseResult) return;
+    
+    navigation.navigate('ColumnMapping', {
+      headers: parseResult.headers,
+      data: parseResult.data,
+      fileName: fileName || 'unknown.csv',
+    });
   };
+
 
   return (
     <ScrollView style={styles.container}>
