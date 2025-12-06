@@ -253,21 +253,22 @@ export function TransactionsScreen() {
       {/* Action Buttons Row */}
       <View style={styles.actionButtonsRow}>
         <TouchableOpacity
-          style={[styles.importButton, { backgroundColor: colors.primary, flex: 1 }]}
+          style={[styles.actionButton, { backgroundColor: colors.primary }]}
           onPress={() => navigation.navigate('Import')}
         >
-          <Text style={styles.importButtonIcon}>📥</Text>
-          <Text style={styles.importButtonText}>Import CSV</Text>
+          <Text style={styles.actionButtonIcon}>📥</Text>
+          <Text style={styles.actionButtonText}>Import CSV</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.addManualButton, { backgroundColor: '#4CAF50', flex: 1, marginLeft: 8 }]}
+          style={[styles.actionButton, { backgroundColor: colors.primary }]}
           onPress={() => navigation.navigate('ManualTransaction')}
         >
-          <Text style={styles.addManualButtonIcon}>➕</Text>
-          <Text style={styles.addManualButtonText}>Add Manual</Text>
+          <Text style={styles.actionButtonIcon}>➕</Text>
+          <Text style={styles.actionButtonText}>Add Manual</Text>
         </TouchableOpacity>
       </View>
+
 
      
       {/* Search Bar */}
@@ -521,24 +522,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  importButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: Spacing.base,
-    margin: Spacing.base,
-    borderRadius: 12,
-    gap: Spacing.sm,
-  },
-  importButtonIcon: {
-    fontSize: 20,
-  },
-  importButtonText: {
-    color: '#FFFFFF',
-    fontSize: Typography.fontSize.base,
-    fontWeight: Typography.fontWeight.semibold,
-  },
-
   centered: {
     flex: 1,
     alignItems: 'center',
@@ -711,7 +694,8 @@ const styles = StyleSheet.create({
     marginHorizontal: Spacing.base,
     marginVertical: Spacing.base,
   },
-  addManualButton: {
+  actionButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -719,13 +703,14 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     gap: Spacing.sm,
   },
-  addManualButtonIcon: {
+  actionButtonIcon: {
     fontSize: 20,
   },
-  addManualButtonText: {
+  actionButtonText: {
     color: '#FFFFFF',
     fontSize: Typography.fontSize.base,
     fontWeight: Typography.fontWeight.semibold,
   },
+
 
 });
