@@ -12,6 +12,7 @@ import {
   ColumnMappingScreen,
   ManualTransactionScreen,
   HoldingDetailScreen,
+  ImportConfirmationScreen,
 } from '../screens';
 import { HoldingsScreen } from '../screens/HoldingsScreen';
 import { useTheme } from '../hooks/useTheme';
