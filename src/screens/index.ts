@@ -18,4 +18,5 @@ export { DevTestScreen } from './DevTestScreen';
 export { AccountsScreen } from './AccountsScreen';
 export { AddAccountScreen } from './AddAccountScreen';
 export { AccountDetailScreen } from './AccountDetailScreen';
+export { TestBitOasisScreen } from './TestBitOasisScreen';
 

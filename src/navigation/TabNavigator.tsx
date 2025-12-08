@@ -15,6 +15,7 @@ import {
   ImportConfirmationScreen,
   AccountsScreen,
   AddAccountScreen,
+  TestBitOasisScreen,
 } from '../screens';
 import { HoldingsScreen } from '../screens/HoldingsScreen';
 import { useTheme } from '../hooks/useTheme';

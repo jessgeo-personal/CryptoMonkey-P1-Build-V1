@@ -1,7 +1,7 @@
 // FILE: src/screens/TestBitOasisScreen.tsx
-// TEMPORARY TEST SCREEN - DELETE AFTER TESTING
+// UPDATED - Use real accounts from database instead of test IDs
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,32 +11,75 @@ import {
   Alert,
   ActivityIndicator,
   TextInput,
+  FlatList,
 } from 'react-native';
 import { useTheme } from '../hooks/useTheme';
 import { Button, Card } from '../components/common';
 import { Spacing } from '../constants/spacing';
 import { Typography } from '../constants/typography';
 import BitOasisService from '../services/api/BitOasisService';
+import { AccountService } from '../services/accountService';
+import { getUserRepository } from '../services/database/repositories/UserRepository';
+import type { Account } from '../types/account.types';
 
 // ============================================
 // TEST BITOASIS SERVICE SCREEN
+// UPDATED: Uses real accounts from database
 // ============================================
 
 export function TestBitOasisScreen() {
   const { colors } = useTheme();
 
+  // User and accounts
+  const [userId, setUserId] = useState('');
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
+
   // State for API token input
   const [apiToken, setApiToken] = useState('');
-  const [accountId, setAccountId] = useState('test-account-123');
-  const [userId, setUserId] = useState('user-123');
 
   // Test results
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<string[]>([]);
+  const [showAccountsList, setShowAccountsList] = useState(false);
+
+  // Initialize: Load user and accounts
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const userRepo = getUserRepository();
+        const user = await userRepo.getOrCreateDefaultUser();
+        setUserId(user.id);
+
+        // Load BitOasis accounts
+        const allAccounts = await AccountService.getAllAccounts(user.id);
+        const bitOasisAccounts = allAccounts.filter(
+          acc => acc.platform === 'BitOasis'
+        );
+        setAccounts(bitOasisAccounts);
+
+        if (bitOasisAccounts.length > 0) {
+          setSelectedAccount(bitOasisAccounts[0]);
+          addLog(`✅ Loaded ${bitOasisAccounts.length} BitOasis account(s)`);
+        } else {
+          addLog('⚠️ No BitOasis accounts found. Please create one first.');
+        }
+      } catch (error) {
+        addLog(
+          `❌ Error initializing: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+      }
+    };
+
+    init();
+  }, []);
 
   // Helper: Add log entry
   const addLog = (message: string) => {
-    setResults(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
+    setResults(prev => [
+      ...prev,
+      `${new Date().toLocaleTimeString()}: ${message}`,
+    ]);
   };
 
   const clearLogs = () => {
@@ -78,24 +121,46 @@ export function TestBitOasisScreen() {
 
     try {
       if (!apiToken.trim()) {
-        addLog('❌ ERROR: API token is empty. Please enter your BitOasis API token.');
+        addLog('❌ ERROR: API token is empty.');
         setLoading(false);
         return;
       }
 
-      const result = await BitOasisService.fetchBalances(apiToken, accountId);
+      if (!selectedAccount) {
+        addLog('❌ ERROR: No account selected.');
+        setLoading(false);
+        return;
+      }
+
+      const result = await BitOasisService.fetchBalances(
+        apiToken,
+        selectedAccount.id
+      );
 
       if (result.success && result.balance) {
         addLog(`✅ SUCCESS: Fetched balances`);
+        addLog(`   Account: ${selectedAccount.accountName}`);
         addLog(`   Total Value: ${result.balance.totalValue}`);
         addLog(`   Currency: ${result.balance.currency}`);
         addLog(`   Asset Count: ${result.balance.assetCount}`);
-        addLog(`   Last Updated: ${new Date(result.balance.lastUpdated).toLocaleString()}`);
+        addLog(
+          `   Last Updated: ${new Date(result.balance.lastUpdated).toLocaleString()}`
+        );
         addLog(`   Breakdown: ${Object.keys(result.balance.breakdown).length} assets`);
 
-        Object.entries(result.balance.breakdown).forEach(([asset, data]) => {
-          addLog(`     - ${asset}: ${data.quantity} (Value: ${data.value.toFixed(2)}, ${data.percentage.toFixed(1)}%)`);
-        });
+        Object.entries(result.balance.breakdown)
+          .slice(0, 5)
+          .forEach(([asset, data]) => {
+            addLog(
+              `     - ${asset}: ${data.quantity} (Value: ${data.value.toFixed(2)}, ${data.percentage.toFixed(1)}%)`
+            );
+          });
+
+        if (Object.keys(result.balance.breakdown).length > 5) {
+          addLog(
+            `     ... and ${Object.keys(result.balance.breakdown).length - 5} more`
+          );
+        }
       } else {
         addLog(`❌ FAILED: ${result.error}`);
       }
@@ -115,18 +180,39 @@ export function TestBitOasisScreen() {
 
     try {
       if (!apiToken.trim()) {
-        addLog('❌ ERROR: API token is empty. Please enter your BitOasis API token.');
+        addLog('❌ ERROR: API token is empty.');
         setLoading(false);
         return;
       }
 
-      const result = await BitOasisService.syncAccount(accountId, userId, apiToken);
+      if (!selectedAccount) {
+        addLog('❌ ERROR: No account selected.');
+        setLoading(false);
+        return;
+      }
+
+      if (!userId) {
+        addLog('❌ ERROR: User ID not initialized.');
+        setLoading(false);
+        return;
+      }
+
+      addLog(
+        `📝 Syncing account: ${selectedAccount.accountName} (ID: ${selectedAccount.id})`
+      );
+
+      const result = await BitOasisService.syncAccount(
+        selectedAccount.id,
+        userId,
+        apiToken
+      );
 
       if (result.success) {
         addLog(`✅ SUCCESS: ${result.message}`);
         if (result.balance) {
           addLog(`   Balance updated in database`);
           addLog(`   Total Value: ${result.balance.totalValue}`);
+          addLog(`   Assets: ${result.balance.assetCount}`);
         }
       } else {
         addLog(`❌ FAILED: ${result.message}`);
@@ -166,9 +252,14 @@ export function TestBitOasisScreen() {
 
   // TEST 6: Clear Cache
   const testClearCache = () => {
+    if (!selectedAccount) {
+      addLog('❌ No account selected.');
+      return;
+    }
+
     addLog('🧪 TEST 6: Clearing cache...');
 
-    BitOasisService.clearAccountCache(accountId);
+    BitOasisService.clearAccountCache(selectedAccount.id);
     addLog('✅ Account cache cleared');
 
     BitOasisService.clearAllCaches();
@@ -178,11 +269,105 @@ export function TestBitOasisScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Input Section */}
+      {/* Account Selection */}
       <Card style={{ marginBottom: Spacing.lg }}>
         <Text style={[styles.title, { color: colors.text }]}>
           BitOasis Service Test
         </Text>
+
+        {/* Selected Account */}
+        {selectedAccount ? (
+          <View
+            style={{
+              backgroundColor: colors.surface,
+              padding: Spacing.md,
+              borderRadius: 8,
+              marginBottom: Spacing.md,
+            }}
+          >
+            <Text style={[{ color: colors.textSecondary, fontSize: 12 }]}>
+              Selected Account:
+            </Text>
+            <Text style={[{ color: colors.text, fontSize: 16, fontWeight: '600' }]}>
+              {selectedAccount.accountName}
+            </Text>
+            <Text style={[{ color: colors.textSecondary, fontSize: 11 }]}>
+              ID: {selectedAccount.id}
+            </Text>
+          </View>
+        ) : (
+          <View
+            style={{
+              backgroundColor: colors.surface,
+              padding: Spacing.md,
+              borderRadius: 8,
+              marginBottom: Spacing.md,
+            }}
+          >
+            <Text style={[{ color: colors.primary, fontWeight: '600' }]}>
+              ⚠️ No BitOasis accounts found
+            </Text>
+            <Text style={[{ color: colors.textSecondary, fontSize: 12 }]}>
+              Please create a BitOasis account first in the Accounts tab.
+            </Text>
+          </View>
+        )}
+
+        {/* Account Selection Button */}
+        {accounts.length > 1 && (
+          <Button
+            title={`📋 Select Account (${accounts.length} available)`}
+            onPress={() => setShowAccountsList(!showAccountsList)}
+            variant="secondary"
+            fullWidth
+            style={{ marginBottom: Spacing.md }}
+          />
+        )}
+
+        {/* Accounts List */}
+        {showAccountsList && accounts.length > 0 && (
+          <View
+            style={{
+              borderTopWidth: 1,
+              borderTopColor: colors.border,
+              paddingTop: Spacing.md,
+              marginBottom: Spacing.md,
+            }}
+          >
+            {accounts.map(account => (
+              <TouchableOpacity
+                key={account.id}
+                onPress={() => {
+                  setSelectedAccount(account);
+                  setShowAccountsList(false);
+                  addLog(`✅ Selected account: ${account.accountName}`);
+                }}
+                style={{
+                  paddingVertical: Spacing.sm,
+                  paddingHorizontal: Spacing.md,
+                  backgroundColor:
+                    selectedAccount?.id === account.id
+                      ? colors.primary
+                      : 'transparent',
+                  borderRadius: 6,
+                  marginBottom: Spacing.xs,
+                }}
+              >
+                <Text
+                  style={{
+                    color:
+                      selectedAccount?.id === account.id
+                        ? '#FFFFFF'
+                        : colors.text,
+                    fontWeight: '500',
+                  }}
+                >
+                  {account.accountName}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
 
         <Text style={[styles.label, { color: colors.textSecondary }]}>
           API Token (from BitOasis Settings):
@@ -204,42 +389,6 @@ export function TestBitOasisScreen() {
           multiline
           numberOfLines={3}
         />
-
-        <Text style={[styles.label, { color: colors.textSecondary, marginTop: Spacing.md }]}>
-          Account ID (for testing):
-        </Text>
-        <TextInput
-          style={[
-            styles.input,
-            {
-              borderColor: colors.border,
-              color: colors.text,
-              backgroundColor: colors.surface,
-            },
-          ]}
-          placeholder="test-account-123"
-          placeholderTextColor={colors.textSecondary}
-          value={accountId}
-          onChangeText={setAccountId}
-        />
-
-        <Text style={[styles.label, { color: colors.textSecondary, marginTop: Spacing.md }]}>
-          User ID (for testing):
-        </Text>
-        <TextInput
-          style={[
-            styles.input,
-            {
-              borderColor: colors.border,
-              color: colors.text,
-              backgroundColor: colors.surface,
-            },
-          ]}
-          placeholder="user-123"
-          placeholderTextColor={colors.textSecondary}
-          value={userId}
-          onChangeText={setUserId}
-        />
       </Card>
 
       {/* Test Buttons Section */}
@@ -251,7 +400,7 @@ export function TestBitOasisScreen() {
         <Button
           title="TEST 1: Validate Credentials"
           onPress={testValidateCredentials}
-          disabled={loading}
+          disabled={loading || !apiToken}
           fullWidth
           style={{ marginBottom: Spacing.sm }}
         />
@@ -259,16 +408,16 @@ export function TestBitOasisScreen() {
         <Button
           title="TEST 2: Fetch Balances"
           onPress={testFetchBalances}
-          disabled={loading}
+          disabled={loading || !apiToken || !selectedAccount}
           variant="secondary"
           fullWidth
           style={{ marginBottom: Spacing.sm }}
         />
 
         <Button
-          title="TEST 3: Full Sync"
+          title="TEST 3: Full Sync (Update DB)"
           onPress={testFullSync}
-          disabled={loading}
+          disabled={loading || !apiToken || !selectedAccount}
           variant="secondary"
           fullWidth
           style={{ marginBottom: Spacing.sm }}
@@ -295,7 +444,7 @@ export function TestBitOasisScreen() {
         <Button
           title="TEST 6: Clear Cache"
           onPress={testClearCache}
-          disabled={loading}
+          disabled={loading || !selectedAccount}
           variant="ghost"
           fullWidth
         />
@@ -365,7 +514,8 @@ export function TestBitOasisScreen() {
           3. Create a new token{'\n'}
           4. Give it "Read" permissions{'\n'}
           5. Copy and paste the token above{'\n'}
-          6. Run TEST 1 to validate
+          6. Run TEST 1 to validate{'\n'}
+          7. Run TEST 3 to sync with database
         </Text>
       </Card>
     </View>
