@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import { getTransactionRepository } from '../services/database/repositories/Tran
 import { getHoldingRepository } from '../services/database/repositories/HoldingRepository';
 import { seedTestData, clearAllData } from '../services/seedData';
 import { AccountService } from '../services/accountService';
+import SchemaValidator from '../services/database/schemaValidator';
 
 // ============================================
 // DEVELOPER TEST SCREEN
@@ -53,6 +54,31 @@ export function DevTestScreen() {
       Alert.alert('Error', 'Failed to refresh stats');
     }
   };
+
+  /**
+   * Validate schema on component mount
+   */
+  useEffect(() => {
+    const validateOnStartup = async () => {
+      console.log('\n🧪 Running schema validation...\n');
+      
+      try {
+        const isValid = await SchemaValidator.fullValidation();
+        
+        if (isValid) {
+          console.log('✅ Database schema is VALID');
+        } else {
+          console.log('❌ Database schema has ERRORS');
+        }
+      } catch (error) {
+        console.error('Validation error:', error);
+      }
+    };
+
+    validateOnStartup();
+  }, []);
+
+
 
   /**
    * Seed test data
@@ -361,7 +387,7 @@ export function DevTestScreen() {
     }
   };
 
-
+  
   // Refresh stats on mount
   React.useEffect(() => {
     refreshStats();
