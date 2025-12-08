@@ -36,6 +36,8 @@ export type MainTabParamList = {
     asset: string;
     currentPrice: number;
   };
+  Accounts: undefined;
+  AddAccount: undefined;
 };
 
 
