@@ -87,32 +87,43 @@ export function TestBitOasisScreen() {
   };
 
   // TEST 1: Validate Credentials
-  const testValidateCredentials = async () => {
+    const testValidateCredentials = async () => {
+    console.log('TEST 1 clicked - loading state before:', loading);
+    
     setLoading(true);
     addLog('🧪 TEST 1: Validating credentials...');
 
     try {
-      if (!apiToken.trim()) {
-        addLog('❌ ERROR: API token is empty. Please enter your BitOasis API token.');
+        if (!apiToken.trim()) {
+        addLog('❌ ERROR: API token is empty.');
+        Alert.alert('Error', 'API token is empty');
         setLoading(false);
         return;
-      }
+        }
 
-      const validation = await BitOasisService.validateCredentials(apiToken);
+        const validation = await BitOasisService.validateCredentials(apiToken);
+        console.log('Validation result:', validation);
 
-      if (validation.valid) {
+        if (validation.valid) {
         addLog('✅ SUCCESS: Credentials are valid!');
-      } else {
+        Alert.alert('Success', 'Your BitOasis API token is valid!');
+        } else {
         addLog(`❌ FAILED: ${validation.error}`);
-      }
+        Alert.alert('Failed', validation.error || 'Validation failed');
+        }
 
-      addLog('---');
+        addLog('---');
     } catch (error) {
-      addLog(`❌ ERROR: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        console.error('Validation error:', error);
+        const msg = error instanceof Error ? error.message : 'Unknown error';
+        addLog(`❌ ERROR: ${msg}`);
+        Alert.alert('Error', msg);
     } finally {
-      setLoading(false);
+        console.log('Setting loading to false');
+        setLoading(false);
     }
-  };
+    };
+
 
   // TEST 2: Fetch Balances
   const testFetchBalances = async () => {
@@ -405,23 +416,39 @@ export function TestBitOasisScreen() {
           style={{ marginBottom: Spacing.sm }}
         />
 
+       <View>
+        {!selectedAccount && (
+            <Text style={{ color: colors.error, fontSize: 12, marginBottom: 4, textAlign: 'center' }}>
+            ⚠️ Please select an account first
+            </Text>
+        )}
+        
         <Button
-          title="TEST 2: Fetch Balances"
-          onPress={testFetchBalances}
-          disabled={loading || !apiToken || !selectedAccount}
-          variant="secondary"
-          fullWidth
-          style={{ marginBottom: Spacing.sm }}
+            title="TEST 2: Fetch Balances"
+            onPress={testFetchBalances}
+            disabled={loading || !apiToken || !selectedAccount}
+            variant="secondary"
+            fullWidth
+            style={{ marginBottom: Spacing.sm }}
         />
+        </View>
+
+        <View>
+        {!selectedAccount && (
+            <Text style={{ color: colors.error, fontSize: 12, marginBottom: 4, textAlign: 'center' }}>
+            ⚠️ Please select an account first
+            </Text>
+        )}
 
         <Button
-          title="TEST 3: Full Sync (Update DB)"
-          onPress={testFullSync}
-          disabled={loading || !apiToken || !selectedAccount}
-          variant="secondary"
-          fullWidth
-          style={{ marginBottom: Spacing.sm }}
+            title="TEST 3: Full Sync (Update DB)"
+            onPress={testFullSync}
+            disabled={loading || !apiToken || !selectedAccount}
+            variant="secondary"
+            fullWidth
+            style={{ marginBottom: Spacing.sm }}
         />
+        </View>
 
         <Button
           title="TEST 4: Supported Currencies"
