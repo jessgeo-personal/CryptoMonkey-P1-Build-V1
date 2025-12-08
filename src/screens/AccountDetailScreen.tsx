@@ -1,5 +1,5 @@
 // FILE: src/screens/AccountDetailScreen.tsx
-// CREATE NEW FILE - Complete implementation
+// COMPLETE REPLACEMENT - FIXED
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -10,7 +10,6 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
-  Modal,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useTheme } from '../hooks/useTheme';
@@ -25,9 +24,10 @@ import {
   CONNECTION_STATUS_CONFIG,
 } from '../constants/accountConstants';
 import { AccountService } from '../services/accountService';
-import { HoldingService } from '../services/HoldingService';
+import { getHoldingRepository } from '../services/database/repositories/HoldingRepository';
 import { getUserRepository } from '../services/database/repositories/UserRepository';
 import type { Account } from '../types/account.types';
+import type { MainTabParamList } from '../types/navigation';
 
 // ============================================
 // ACCOUNT DETAIL SCREEN
@@ -35,12 +35,6 @@ import type { Account } from '../types/account.types';
 
 type Props = MainTabScreenProps<'AccountDetail'>;
 type DetailRouteProp = RouteProp<MainTabParamList, 'AccountDetail'>;
-
-interface MainTabParamList {
-  AccountDetail: {
-    accountId: string;
-  };
-}
 
 export function AccountDetailScreen() {
   const { colors } = useTheme();
@@ -103,8 +97,17 @@ export function AccountDetailScreen() {
   const loadAccountHoldings = async (acc: Account) => {
     setHoldingLoading(true);
     try {
-      const holdings = await HoldingService.getHoldingsByAccount(userId, acc.id);
-      setAccountHoldings(holdings || []);
+      // For CEX accounts, get holdings by location (accountId is the locationId)
+      if (acc.accountType === 'cex') {
+        const holdingRepo = getHoldingRepository();
+        const holdings = await holdingRepo.findByLocation(userId, 'cex', acc.id);
+        setAccountHoldings(holdings || []);
+      } else {
+        // For wallets, get holdings by location with wallet address
+        const holdingRepo = getHoldingRepository();
+        const holdings = await holdingRepo.findByLocation(userId, 'wallet', acc.primaryAddress);
+        setAccountHoldings(holdings || []);
+      }
     } catch (error) {
       console.error('Error loading holdings:', error);
       setAccountHoldings([]);
@@ -397,7 +400,7 @@ export function AccountDetailScreen() {
         )}
       </Card>
 
-      {/* Holdings Section */}
+      {/* Holdings Section - Show for CEX accounts */}
       {account.accountType === 'cex' && (
         <Card style={{ marginBottom: Spacing.lg }}>
           <View style={styles.detailsHeader}>
@@ -421,7 +424,7 @@ export function AccountDetailScreen() {
                     </Text>
                   </View>
                   <Text style={[styles.holdingValue, { color: colors.text }]}>
-                    {formatBalance(holding.value)}
+                    {formatBalance(holding.quantity * 1)} {/* Placeholder - needs price */}
                   </Text>
                 </View>
               ))}
