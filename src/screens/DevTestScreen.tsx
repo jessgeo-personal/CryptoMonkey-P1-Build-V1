@@ -200,27 +200,167 @@ export function DevTestScreen() {
     }
   };
   
-  /**
+    /**
    * Test Account creation
    */
   const testCreateAccount = async () => {
-    const account = await AccountService.createAccount('user123', {
-      accountType: 'wallet',
-      accountName: 'My Ethereum Wallet',
-      primaryAddress: '0x1234567890123456789012345678901234567890',
-      baseCurrency: 'USD',
-    });
-    console.log('✓ Account created:', account.id);
+    setLoading(true);
+    try {
+      const userRepo = getUserRepository();
+      const user = await userRepo.getOrCreateDefaultUser();
+
+      const account = await AccountService.createAccount(user.id, {
+        accountType: 'wallet',
+        accountName: 'My Ethereum Wallet',
+        primaryAddress: '0x1234567890123456789012345678901234567890',
+        baseCurrency: 'USD',
+      });
+      
+      console.log('✅ Account created:', account.id);
+      Alert.alert('Success', `Account created: ${account.id}`);
+    } catch (error) {
+      console.error('Create account error:', error);
+      Alert.alert('Error', 'Failed to create account');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  /**
+   * Test adding credential to account
+   */
   const testAddCredential = async () => {
-    await AccountService.addCredential(
-      accountId,
-      'user123',
-      'wallet_address',
-      '0x1234567890123456789012345678901234567890'
-    );
-    console.log('✓ Credential added');
+    setLoading(true);
+    try {
+      const userRepo = getUserRepository();
+      const user = await userRepo.getOrCreateDefaultUser();
+
+      // First create an account
+      const account = await AccountService.createAccount(user.id, {
+        accountType: 'wallet',
+        accountName: 'Test Wallet',
+        primaryAddress: '0x1234567890123456789012345678901234567890',
+        baseCurrency: 'USD',
+      });
+
+      // Then add credential
+      const credential = await AccountService.addCredential(
+        account.id,
+        user.id,
+        'wallet_address',
+        '0x1234567890123456789012345678901234567890'
+      );
+
+      console.log('✅ Credential added:', credential.id);
+      Alert.alert('Success', `Credential added to account`);
+    } catch (error) {
+      console.error('Add credential error:', error);
+      Alert.alert('Error', 'Failed to add credential');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  /**
+   * Test getting all accounts
+   */
+  const testGetAllAccounts = async () => {
+    setLoading(true);
+    try {
+      const userRepo = getUserRepository();
+      const user = await userRepo.getOrCreateDefaultUser();
+
+      const accounts = await AccountService.getAllAccounts(user.id);
+      
+      console.log(`✅ Found ${accounts.length} accounts`);
+      accounts.forEach((acc, idx) => {
+        console.log(`${idx + 1}. ${acc.accountName} (${acc.accountType})`);
+      });
+
+      Alert.alert('Accounts', `Found ${accounts.length} accounts.\nCheck console for details.`);
+    } catch (error) {
+      console.error('Get accounts error:', error);
+      Alert.alert('Error', 'Failed to fetch accounts');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * Test account validation
+   */
+  const testValidateAccount = async () => {
+    setLoading(true);
+    try {
+      // Test valid account
+      const validAccount = {
+        accountName: 'Valid Account',
+        accountType: 'wallet' as const,
+        primaryAddress: '0x1234567890123456789012345678901234567890',
+        connection: {
+          status: 'connected' as const,
+          credentialType: 'wallet_address' as const,
+          credentials: [
+            {
+              id: 'cred_1',
+              type: 'wallet_address' as const,
+              key: 'addr_1',
+              encryptedValue: 'encrypted',
+              createdAt: Date.now(),
+            },
+          ],
+        },
+      };
+
+      const result = await AccountService.validateAccountCredentials(validAccount as any);
+      console.log('✅ Validation result:', result);
+
+      Alert.alert(
+        'Validation Test',
+        `Valid: ${result.valid}\n${result.error || 'No errors'}`
+      );
+    } catch (error) {
+      console.error('Validation test error:', error);
+      Alert.alert('Error', 'Validation test failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * Test account deletion
+   */
+  const testDeleteAccount = async () => {
+    setLoading(true);
+    try {
+      const userRepo = getUserRepository();
+      const user = await userRepo.getOrCreateDefaultUser();
+
+      // Get all accounts
+      const accountsBefore = await AccountService.getAllAccounts(user.id);
+      
+      if (accountsBefore.length === 0) {
+        Alert.alert('No Data', 'Create an account first');
+        setLoading(false);
+        return;
+      }
+
+      // Delete first account
+      const accountToDelete = accountsBefore[0];
+      await AccountService.deleteAccount(accountToDelete.id, user.id);
+
+      const accountsAfter = await AccountService.getAllAccounts(user.id);
+      console.log(`✅ Account deleted. Remaining: ${accountsAfter.length}`);
+
+      Alert.alert('Success', `Account deleted.\nRemaining accounts: ${accountsAfter.length}`);
+    } catch (error) {
+      console.error('Delete account error:', error);
+      Alert.alert('Error', 'Failed to delete account');
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   // Refresh stats on mount
   React.useEffect(() => {
@@ -323,6 +463,67 @@ export function DevTestScreen() {
           <Text style={styles.buttonText}>💎 View Holdings</Text>
         </TouchableOpacity>
 
+        {/* PHASE 3C-1: ACCOUNT TESTS */}
+        <TouchableOpacity
+          style={[
+            styles.button,
+            { backgroundColor: colors.primary },
+            loading && styles.buttonDisabled,
+          ]}
+          onPress={testCreateAccount}
+          disabled={loading}
+        >
+          <Text style={styles.buttonText}>🔐 Create Account</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.button,
+            { backgroundColor: colors.primary },
+            loading && styles.buttonDisabled,
+          ]}
+          onPress={testAddCredential}
+          disabled={loading}
+        >
+          <Text style={styles.buttonText}>🔑 Add Credential</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.button,
+            { backgroundColor: colors.primary },
+            loading && styles.buttonDisabled,
+          ]}
+          onPress={testGetAllAccounts}
+          disabled={loading}
+        >
+          <Text style={styles.buttonText}>📋 Get All Accounts</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.button,
+            { backgroundColor: colors.primary },
+            loading && styles.buttonDisabled,
+          ]}
+          onPress={testValidateAccount}
+          disabled={loading}
+        >
+          <Text style={styles.buttonText}>✔️ Validate Account</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.button,
+            { backgroundColor: colors.primary },
+            loading && styles.buttonDisabled,
+          ]}
+          onPress={testDeleteAccount}
+          disabled={loading}
+        >
+          <Text style={styles.buttonText}>❌ Delete Account</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity
           style={[
             styles.button,
@@ -335,6 +536,7 @@ export function DevTestScreen() {
           <Text style={styles.buttonText}>🗑️ Clear All Data</Text>
         </TouchableOpacity>
       </View>
+
 
       {loading && (
         <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
