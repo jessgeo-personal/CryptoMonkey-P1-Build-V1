@@ -26,7 +26,7 @@ import {
 import { AccountService } from '../services/accountService';
 import { getHoldingRepository } from '../services/database/repositories/HoldingRepository';
 import { getUserRepository } from '../services/database/repositories/UserRepository';
-import type { Account } from '../types/account.types';
+import type { Account, AccountBalance } from '../types/account.types';
 import type { MainTabParamList } from '../types/navigation';
 
 // ============================================
@@ -57,16 +57,19 @@ export function AccountDetailScreen() {
   // ✅ Setup header back button
   useEffect(() => {
     navigation.setOptions({
-      headerLeft: () => (
+        headerLeft: () => (
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={{ paddingLeft: Spacing.base }}
+            onPress={() => {
+            // Use goBack() which respects the navigation stack
+            navigation.goBack();
+            }}
+            style={{ paddingLeft: Spacing.base }}
         >
-          <Text style={[{ fontSize: Typography.fontSize.lg, color: colors.primary }]}>
+            <Text style={[{ fontSize: Typography.fontSize.lg, color: colors.primary }]}>
             ← Back
-          </Text>
+            </Text>
         </TouchableOpacity>
-      ),
+        ),
     });
   }, [navigation, colors]);
 
@@ -196,11 +199,20 @@ export function AccountDetailScreen() {
   const handleManualSync = async () => {
     setSyncing(true);
     try {
-        // Simulate sync by updating balance cache with mock data
-        // In production, this would call actual API to fetch balance
-        const mockBalance = {
+        // ✅ FIXED: Create proper AccountBalance object with all required fields
+        const mockBalance: AccountBalance = {
         totalValue: Math.random() * 10000, // Mock total value
+        currency: account.baseCurrency as any,
         assetCount: accountHoldings.length || 1,
+        lastUpdated: Date.now(),
+        breakdown: accountHoldings.reduce((acc, holding) => {
+            acc[holding.asset] = {
+            quantity: parseFloat(holding.quantity),
+            value: parseFloat(holding.quantity) * (Math.random() * 1000), // Mock value
+            percentage: 0, // Will be calculated separately
+            };
+            return acc;
+        }, {} as any),
         };
 
         // Update the account's cached balance
@@ -219,7 +231,7 @@ export function AccountDetailScreen() {
     } finally {
         setSyncing(false);
     }
-  };
+    };
 
   if (loading || !account) {
     return (
