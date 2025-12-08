@@ -59,7 +59,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
           subtitle: value.isHardware ? 'Hardware Wallet' : 'Software Wallet',
         }));
 
-console.log('🔍 PlatformSelector platforms:', platforms, 'type:', type);
+  console.log('🔍 PlatformSelector platforms:', platforms, 'type:', type);
 
   const handleSelect = (platformKey: SelectedPlatform) => {
     onSelect(platformKey);
@@ -172,7 +172,9 @@ const styles = StyleSheet.create({
   },
   platformList: {
     flex: 1,
-    minHeight: 200, 
+    // ✅ FIXED: Removed minHeight constraint that was limiting FlatList height
+    // flex: 1 alone allows FlatList to expand to fill available space
+    // Modal maxHeight: '80%' controls overall modal size
   },
   platformItem: {
     flexDirection: 'row',
