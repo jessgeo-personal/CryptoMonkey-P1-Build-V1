@@ -3,7 +3,7 @@
 // SQLite Schema with Migrations Support
 // ============================================
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 export const CREATE_TABLES_SQL = `
 -- ============================================
@@ -228,6 +228,7 @@ CREATE TABLE IF NOT EXISTS tokens (
 CREATE INDEX IF NOT EXISTS idx_tokens_symbol ON tokens(symbol);
 CREATE INDEX IF NOT EXISTS idx_tokens_network ON tokens(network);
 CREATE INDEX IF NOT EXISTS idx_tokens_active ON tokens(is_active);
+CREATE INDEX IF NOT EXISTS idx_tokens_symbol_network ON tokens(symbol, network);
 
 -- ============================================
 -- ACCOUNT TOKENS TABLE (NEW - Phase 4B)
@@ -265,6 +266,8 @@ INSERT OR IGNORE INTO schema_version (id, version, applied_at) VALUES (1, ${SCHE
 `;
 
 export const DROP_TABLES_SQL = `
+DROP TABLE IF EXISTS account_tokens;
+DROP TABLE IF EXISTS tokens;
 DROP TABLE IF EXISTS exchange_rates;
 DROP TABLE IF EXISTS nft_holdings;
 DROP TABLE IF EXISTS liquidity_pool_positions;
