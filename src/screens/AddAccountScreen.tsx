@@ -514,70 +514,102 @@ export function AddAccountScreen() {
 
   const renderCredentialsForm = () => {
     const requirements = platform
-      ? CREDENTIAL_REQUIREMENTS[platform as keyof typeof CREDENTIAL_REQUIREMENTS] || []
-      : [];
+        ? CREDENTIAL_REQUIREMENTS[platform as keyof typeof CREDENTIAL_REQUIREMENTS] || []
+        : [];
+
+    // Get platform info for display
+    const getPlatformInfo = () => {
+        if (!platform) return null;
+        if (accountType === 'cex') {
+        return CEX_PLATFORMS[platform as CexPlatform];
+        }
+        return WALLET_TYPES[platform as WalletType];
+    };
+
+    const platformInfo = getPlatformInfo();
 
     return (
-      <View style={styles.stepContent}>
+        <View style={styles.stepContent}>
         <Text style={[styles.stepTitle, { color: colors.text }]}>
-          API Credentials (Optional)
+            API Credentials (Optional)
         </Text>
         <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-          Add API credentials for automatic balance syncing
+            Add API credentials for automatic balance syncing
         </Text>
 
+        {/* ✅ NEW: Context Card (Platform & Account Name) */}
+        {platformInfo && (
+            <Card style={{ marginBottom: Spacing.lg }}>
+            <View style={styles.platformDisplay}>
+                <Text style={styles.platformIcon}>{platformInfo.logo}</Text>
+                <View style={{ flex: 1 }}>
+                <Text style={[styles.platformLabel, { color: colors.textSecondary }]}>
+                    Adding to:
+                </Text>
+                <Text style={[styles.platformName, { color: colors.text }]}>
+                    {accountName}
+                </Text>
+                <Text style={{ color: colors.textSecondary, fontSize: Typography.fontSize.sm }}>
+                    {platformInfo.name}
+                </Text>
+                </View>
+            </View>
+            </Card>
+        )}
+
         {requirements.length > 0 && (
-          <Card style={{ marginBottom: Spacing.lg }}>
+            <Card style={{ marginBottom: Spacing.lg }}>
             <Text style={[styles.requirementsTitle, { color: colors.text }]}>
-              Required:
+                Required:
             </Text>
             {requirements.map((req, idx) => (
-              <Text
+                <Text
                 key={idx}
                 style={[styles.requirementItem, { color: colors.textSecondary }]}
-              >
+                >
                 • {req}
-              </Text>
+                </Text>
             ))}
-          </Card>
+            </Card>
         )}
 
         <Input
-          label={requirements[0] || 'API Key'}
-          placeholder="Enter API key..."
-          value={apiKey}
-          onChangeText={setApiKey}
-          containerStyle={{ marginBottom: Spacing.lg }}
-          secureTextEntry
+            label={requirements[0] || 'API Key'}
+            placeholder="Enter API key..."
+            value={apiKey}
+            onChangeText={setApiKey}
+            containerStyle={{ marginBottom: Spacing.lg }}
+            secureTextEntry
         />
 
         <Input
-          label={requirements[1] || 'API Secret'}
-          placeholder="Enter API secret..."
-          value={apiSecret}
-          onChangeText={setApiSecret}
-          containerStyle={{ marginBottom: Spacing.xl }}
-          secureTextEntry
+            label={requirements[1] || 'API Secret'}
+            placeholder="Enter API secret..."
+            value={apiSecret}
+            onChangeText={setApiSecret}
+            containerStyle={{ marginBottom: Spacing.xl }}
+            secureTextEntry
         />
 
         <Button
-          title="Confirm & Save Account"
-          onPress={handleCredentialsNext}
-          loading={loading}
-          disabled={loading}
-          fullWidth
+            title="Confirm & Save Account"
+            onPress={handleCredentialsNext}
+            loading={loading}
+            disabled={loading}
+            fullWidth
         />
 
         <Button
-          title="← Back"
-          onPress={() => setStep('details')}
-          variant="ghost"
-          fullWidth
-          style={{ marginTop: Spacing.md }}
+            title="← Back"
+            onPress={() => setStep('details')}
+            variant="ghost"
+            fullWidth
+            style={{ marginTop: Spacing.md }}
         />
-      </View>
+        </View>
     );
-  };
+    };
+
 
   const renderConfirmation = () => (
     <View style={styles.stepContent}>
