@@ -59,6 +59,8 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
           subtitle: value.isHardware ? 'Hardware Wallet' : 'Software Wallet',
         }));
 
+console.log('🔍 PlatformSelector platforms:', platforms, 'type:', type);
+
   const handleSelect = (platformKey: SelectedPlatform) => {
     onSelect(platformKey);
     onClose();
@@ -170,6 +172,7 @@ const styles = StyleSheet.create({
   },
   platformList: {
     flex: 1,
+    minHeight: 200, 
   },
   platformItem: {
     flexDirection: 'row',

@@ -217,17 +217,17 @@ export function AddAccountScreen() {
         Choose your {accountType === 'cex' ? 'exchange platform' : 'wallet type'}
       </Text>
 
-      <Button
+    <Button
         title={
-          platform
+          platform && accountType
             ? `${
                 accountType === 'cex'
-                  ? CEX_PLATFORMS[platform as CexPlatform].logo
-                  : WALLET_TYPES[platform as WalletType].logo
+                  ? CEX_PLATFORMS[platform as CexPlatform]?.logo || ''
+                  : WALLET_TYPES[platform as WalletType]?.logo || ''
               }  ${
                 accountType === 'cex'
-                  ? CEX_PLATFORMS[platform as CexPlatform].name
-                  : WALLET_TYPES[platform as WalletType].name
+                  ? CEX_PLATFORMS[platform as CexPlatform]?.name || platform
+                  : WALLET_TYPES[platform as WalletType]?.name || platform
               }`
             : 'Choose Platform'
         }
@@ -235,6 +235,7 @@ export function AddAccountScreen() {
         variant="outline"
         fullWidth
       />
+
 
       {platform && (
         <View style={{ marginTop: Spacing.xl }}>
