@@ -38,6 +38,9 @@ export type MainTabParamList = {
   };
   Accounts: undefined;
   AddAccount: undefined;
+    AccountDetail: {
+    accountId: string;
+  };
 };
 
 

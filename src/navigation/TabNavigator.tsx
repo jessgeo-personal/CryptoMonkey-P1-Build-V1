@@ -18,6 +18,7 @@ import {
 } from '../screens';
 import { HoldingsScreen } from '../screens/HoldingsScreen';
 import { useTheme } from '../hooks/useTheme';
+import { AccountDetailScreen } from '../screens/AccountDetailScreen';
 
 
 
@@ -119,6 +120,15 @@ export const TabNavigator: React.FC = () => {
         }}
       />
 
+      <Tab.Screen
+        name="AccountDetail"
+        component={AccountDetailScreen}
+        options={{
+          tabBarButton: () => null, // Hide from tab bar
+          headerShown: true,
+          title: 'Account Details',
+        }}
+      />
       <Tab.Screen
         name="LiquidityPools"
         component={LiquidityPoolsScreen}

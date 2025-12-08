@@ -81,8 +81,7 @@ export function AccountsScreen() {
 
   // Navigate to account detail (future)
   const handleAccountPress = (account: Account) => {
-    // TODO: Navigate to AccountDetailScreen
-    Alert.alert('Account Details', `View details for ${account.accountName}`);
+    navigation.navigate('AccountDetail', { accountId: account.id });
   };
 
   // Navigate to Add Account
