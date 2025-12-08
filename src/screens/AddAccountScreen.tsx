@@ -237,66 +237,68 @@ export function AddAccountScreen() {
   const handleSaveAccount = async () => {
     setLoading(true);
     try {
-      if (!draftId) throw new Error('No draft found');
+        if (!draftId) throw new Error('No draft found');
 
-      // Finalize draft to actual account
-      const newAccount = await AccountService.finalizeDraft(draftId, userId);
+        // ✅ finalizeDraft ALREADY deletes the draft internally
+        // So we just need to call it once
+        const newAccount = await AccountService.finalizeDraft(draftId, userId);
 
-      // Add credentials if CEX with API key
-      if (accountType === 'cex' && apiKey) {
+        // Add credentials if CEX with API key
+        if (accountType === 'cex' && apiKey) {
         await AccountService.addCredential(newAccount.id, userId, 'api_key', apiKey);
         if (apiSecret) {
-          await AccountService.addCredential(
+            await AccountService.addCredential(
             newAccount.id,
             userId,
             'private_key',
             apiSecret
-          );
+            );
         }
-      }
+        }
 
-      // Update connection status to connected if credentials added
-      if (apiKey || walletAddress) {
+        // Update connection status to connected if credentials added
+        if (apiKey || walletAddress) {
         await AccountService.updateSyncStatus(
-          newAccount.id,
-          userId,
-          'connected'
+            newAccount.id,
+            userId,
+            'connected'
         );
-      }
+        }
 
-      Alert.alert(
+        Alert.alert(
         'Success',
         `${accountName} has been added successfully!`,
         [
-          {
+            {
             text: 'OK',
             onPress: () => {
-              // Reset state
-              setStep('typeSelect');
-              setAccountType(undefined);      // ✅ Change from null
-              setDraftId(undefined);           // ✅ Change from null
-              setPlatform(undefined);          // ✅ Change from null
-              setAccountName('');
-              setDescription('');
-              setWalletAddress('');
-              setApiKey('');
-              setApiSecret('');
-              setErrors({});
-              navigation.goBack();
+                // Reset state
+                setStep('typeSelect');
+                setAccountType(undefined);
+                setDraftId(undefined);
+                setPlatform(undefined);
+                setAccountName('');
+                setDescription('');
+                setWalletAddress('');
+                setApiKey('');
+                setApiSecret('');
+                setErrors({});
+                navigation.goBack();
             },
-          },
+            },
         ]
-      );
+        );
     } catch (error) {
-      console.error('Error creating account:', error);
-      Alert.alert(
+        console.error('Error creating account:', error);
+        Alert.alert(
         'Error',
         error instanceof Error ? error.message : 'Failed to create account'
-      );
+        );
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
   };
+
 
   // RENDER FUNCTIONS
   const renderTypeSelection = () => (
