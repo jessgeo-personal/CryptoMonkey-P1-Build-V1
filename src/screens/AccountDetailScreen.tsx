@@ -197,12 +197,17 @@ export function AccountDetailScreen() {
   };
 
   const handleManualSync = async () => {
+    if (!account) {
+        Alert.alert('Error', 'Account not found');
+        return;
+    }
+
     setSyncing(true);
     try {
-        // ✅ FIXED: Create proper AccountBalance object with all required fields
+        // ✅ FIXED: Check account exists before using it
         const mockBalance: AccountBalance = {
         totalValue: Math.random() * 10000, // Mock total value
-        currency: account.baseCurrency as any,
+        currency: account.baseCurrency,
         assetCount: accountHoldings.length || 1,
         lastUpdated: Date.now(),
         breakdown: accountHoldings.reduce((acc, holding) => {
@@ -231,7 +236,7 @@ export function AccountDetailScreen() {
     } finally {
         setSyncing(false);
     }
-    };
+  };
 
   if (loading || !account) {
     return (
