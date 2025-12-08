@@ -119,8 +119,9 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
               </TouchableOpacity>
             )}
             style={styles.platformList}
+            scrollEnabled={true}
+            nestedScrollEnabled={true}
           />
-
 
           {/* Footer */}
           <View style={[styles.modalFooter, { borderTopColor: colors.border }]}>
