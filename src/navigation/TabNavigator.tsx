@@ -13,6 +13,8 @@ import {
   ManualTransactionScreen,
   HoldingDetailScreen,
   ImportConfirmationScreen,
+  AccountsScreen,
+  AddAccountScreen,
 } from '../screens';
 import { HoldingsScreen } from '../screens/HoldingsScreen';
 import { useTheme } from '../hooks/useTheme';
@@ -94,6 +96,29 @@ export const TabNavigator: React.FC = () => {
           ),
         }}
       />
+      {/* Accounts Management Tab */}
+      <Tab.Screen
+        name="Accounts"
+        component={AccountsScreen}
+        options={{
+          tabBarLabel: 'Accounts',
+          tabBarIcon: ({ focused, color }) => (
+            <TabBarIcon emoji="👛" focused={focused} color={color} />
+          ),
+        }}
+      />
+
+      {/* Add Account Screen - Hidden from Tab */}
+      <Tab.Screen
+        name="AddAccount"
+        component={AddAccountScreen}
+        options={{
+          tabBarButton: () => null, // Hide from tab bar
+          headerShown: true,
+          title: 'Add Account',
+        }}
+      />
+
       <Tab.Screen
         name="LiquidityPools"
         component={LiquidityPoolsScreen}

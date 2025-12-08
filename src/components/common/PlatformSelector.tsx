@@ -23,6 +23,13 @@ import type { CexPlatform, WalletType } from '../../types/account.types';
 type PlatformType = 'cex' | 'wallet';
 type SelectedPlatform = CexPlatform | WalletType;
 
+interface PlatformItem {
+  key: CexPlatform | WalletType;
+  name: string;
+  logo?: string;
+  subtitle?: string;
+}
+
 interface PlatformSelectorProps {
   visible: boolean;
   onClose: () => void;
@@ -79,7 +86,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
           </View>
 
           {/* Platform List */}
-          <FlatList
+          <FlatList<PlatformItem>
             data={platforms}
             keyExtractor={(item) => item.key}
             renderItem={({ item }) => (
@@ -113,6 +120,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({
             )}
             style={styles.platformList}
           />
+
 
           {/* Footer */}
           <View style={[styles.modalFooter, { borderTopColor: colors.border }]}>

@@ -97,8 +97,8 @@ export const AccountCard: React.FC<AccountCardProps> = ({
                 ? 'error'
                 : 'warning'
             }
-            size="sm"
           />
+
         </View>
 
         {/* Balance Section */}
