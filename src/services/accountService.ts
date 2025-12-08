@@ -1,6 +1,8 @@
 // src/services/accountService.ts
 import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import base64 from 'base-64';
+import utf8 from 'utf8';
 import {
   Account,
   AccountBalance,
@@ -321,12 +323,16 @@ export class AccountService {
   }
 
   /**
-   * Encrypt credential (simple Base64 - upgrade to proper encryption)
+   * Encrypt credential (React Native compatible Base64)
+   * TODO: Upgrade to proper AES encryption with device-specific key using react-native-aes-crypto
    */
   private static async encryptCredential(value: string): Promise<string> {
     try {
-      // TODO: Implement proper AES encryption with device-specific key
-      return Buffer.from(value).toString('base64');
+      const bytes = utf8.encode(value);
+      const encoded = base64.encode(bytes);
+      
+      console.log('✅ Credential encrypted successfully');
+      return encoded;
     } catch (error) {
       console.error('Encryption error:', error);
       throw error;
@@ -334,12 +340,16 @@ export class AccountService {
   }
 
   /**
-   * Decrypt credential (simple Base64 - upgrade to proper decryption)
+   * Decrypt credential (React Native compatible Base64)
+   * TODO: Upgrade to proper AES decryption with device-specific key using react-native-aes-crypto
    */
   static async decryptCredential(encrypted: string): Promise<string> {
     try {
-      // TODO: Implement proper AES decryption with device-specific key
-      return Buffer.from(encrypted, 'base64').toString('utf-8');
+      const bytes = base64.decode(encrypted);
+      const decoded = utf8.decode(bytes);
+      
+      console.log('✅ Credential decrypted successfully');
+      return decoded;
     } catch (error) {
       console.error('Decryption error:', error);
       throw error;
