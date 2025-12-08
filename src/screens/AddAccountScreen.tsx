@@ -116,6 +116,8 @@ export function AddAccountScreen() {
   // Step 2: Select Platform or Resume Draft
   const handleSelectPlatform = (selectedPlatform: CexPlatform | WalletType) => {
     setPlatform(selectedPlatform);
+    setAccountName(''); // ✅ Clear the account name when platform is selected
+    setStep('details');
 
     // Auto-fill if this is the first time selecting this platform
     if (!accountName) {
@@ -411,7 +413,19 @@ export function AddAccountScreen() {
     </View>
   );
 
-  const renderDetailsForm = () => (
+  const renderDetailsForm = () => {
+  // Get platform info for display
+  const getPlatformInfo = () => {
+    if (!platform) return null;
+    if (accountType === 'cex') {
+      return CEX_PLATFORMS[platform as CexPlatform];
+    }
+    return WALLET_TYPES[platform as WalletType];
+  };
+
+  const platformInfo = getPlatformInfo();
+
+  return (
     <View style={styles.stepContent}>
       <Text style={[styles.stepTitle, { color: colors.text }]}>
         Account Details
@@ -419,6 +433,32 @@ export function AddAccountScreen() {
       <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
         Fill in your account information
       </Text>
+
+      {/* ✅ NEW: Platform Display Card */}
+      {platformInfo && (
+        <Card style={{ marginBottom: Spacing.lg }}>
+          <View style={styles.platformDisplay}>
+            <Text style={styles.platformIcon}>{platformInfo.logo}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.platformLabel, { color: colors.textSecondary }]}>
+                Selected Platform
+              </Text>
+              <Text style={[styles.platformName, { color: colors.text }]}>
+                {platformInfo.name}
+              </Text>
+            </View>
+            <Button
+              title="Change"
+              onPress={() => {
+                setPlatform(undefined);
+                setStep('platformSelect');
+              }}
+              variant="outline"
+              size="sm"
+            />
+          </View>
+        </Card>
+      )}
 
       <Input
         label="Account Name *"
@@ -470,6 +510,7 @@ export function AddAccountScreen() {
       />
     </View>
   );
+};
 
   const renderCredentialsForm = () => {
     const requirements = platform
@@ -710,5 +751,21 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.base,
     fontWeight: Typography.fontWeight.semibold,
     marginTop: Spacing.xs,
+  },
+  platformDisplay: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  platformIcon: {
+    fontSize: 32,
+  },
+  platformLabel: {
+    fontSize: Typography.fontSize.xs,
+    marginBottom: Spacing.xs,
+  },
+  platformName: {
+    fontSize: Typography.fontSize.lg,
+    fontWeight: Typography.fontWeight.semibold,
   },
 });
