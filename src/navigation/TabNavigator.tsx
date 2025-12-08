@@ -204,6 +204,14 @@ export const TabNavigator: React.FC = () => {
           title: 'Holding Details',
         }}
       />
+      <Tab.Screen
+        name="TestBitOasis"
+        component={TestBitOasisScreen}
+        options={{
+          title: '🧪 BitOasis Test',
+          // ... other options
+        }}
+      />
     </Tab.Navigator>
   );
 };

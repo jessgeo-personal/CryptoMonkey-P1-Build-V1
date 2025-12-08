@@ -41,6 +41,7 @@ export type MainTabParamList = {
     AccountDetail: {
     accountId: string;
   };
+  TestBitOasis: undefined; 
 };
 
 
