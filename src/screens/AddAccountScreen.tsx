@@ -80,6 +80,19 @@ export function AddAccountScreen() {
       }
     };
     initUser();
+      // This ensures when you press FAB again, it starts fresh
+    return () => {
+        setStep('typeSelect');
+        setAccountType(undefined);
+        setDraftId(undefined);
+        setPlatform(undefined);
+        setAccountName('');
+        setDescription('');
+        setWalletAddress('');
+        setApiKey('');
+        setApiSecret('');
+        setErrors({});
+    };
   }, []);
 
   // Load drafts when account type changes
