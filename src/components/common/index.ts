@@ -9,4 +9,5 @@ export * from './Input';
 // Add to existing exports
 export { AccountCard } from './AccountCard';
 export { PlatformSelector } from './PlatformSelector';
+export { PlatformDropdown } from './PlatformDropdown';
 

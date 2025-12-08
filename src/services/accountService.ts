@@ -97,6 +97,185 @@ export class AccountService {
     }
   }
 
+    /**
+     * Save draft account (unsaved account in creation flow)
+     */
+    static async saveDraftAccount(
+    userId: string,
+    draftData: Partial<Account> & { accountType: AccountType }
+    ): Promise<Account> {
+    try {
+        const draftId = `draft_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+        const draft: Account = {
+        id: draftId,
+        userId,
+        accountType: draftData.accountType,
+        accountName: draftData.accountName || `New ${draftData.accountType} Account`,
+        description: draftData.description,
+        platform: draftData.platform,
+        platformAccountId: draftData.platformAccountId,
+        connection: {
+            status: 'pending',
+            credentialType: 'wallet_address',
+            credentials: [],
+        },
+        networks: draftData.networks,
+        primaryAddress: draftData.primaryAddress,
+        baseCurrency: draftData.baseCurrency || 'USD',
+        displayOrder: 0,
+        isActive: false, // Drafts are inactive
+        isFavorite: false,
+        autoSyncEnabled: false,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        };
+
+        const allDrafts = await this.getAllDrafts(userId);
+        allDrafts.push(draft);
+
+        await AsyncStorage.setItem(
+        `${STORAGE_KEY}_drafts_${userId}`,
+        JSON.stringify(allDrafts)
+        );
+
+        console.log('✅ Draft account saved:', draft.id);
+        return draft;
+    } catch (error) {
+        console.error('Error saving draft account:', error);
+        throw error;
+    }
+    }
+
+    /**
+     * Get all draft accounts
+     */
+    static async getAllDrafts(userId: string): Promise<Account[]> {
+    try {
+        const data = await AsyncStorage.getItem(`${STORAGE_KEY}_drafts_${userId}`);
+        return data ? JSON.parse(data) : [];
+    } catch (error) {
+        console.error('Error getting drafts:', error);
+        return [];
+    }
+    }
+
+    /**
+     * Get draft by ID
+     */
+    static async getDraftById(draftId: string, userId: string): Promise<Account | null> {
+    try {
+        const drafts = await this.getAllDrafts(userId);
+        return drafts.find(d => d.id === draftId) || null;
+    } catch (error) {
+        console.error('Error getting draft:', error);
+        return null;
+    }
+    }
+
+    /**
+     * Update draft account
+     */
+    static async updateDraft(
+    draftId: string,
+    userId: string,
+    updates: Partial<Account>
+    ): Promise<Account> {
+    try {
+        const draft = await this.getDraftById(draftId, userId);
+        if (!draft) {
+        throw new Error('Draft not found');
+        }
+
+        const updated: Account = {
+        ...draft,
+        ...updates,
+        id: draft.id,
+        userId: draft.userId,
+        createdAt: draft.createdAt,
+        updatedAt: Date.now(),
+        };
+
+        const allDrafts = await this.getAllDrafts(userId);
+        const index = allDrafts.findIndex(d => d.id === draftId);
+        if (index >= 0) {
+        allDrafts[index] = updated;
+        }
+
+        await AsyncStorage.setItem(
+        `${STORAGE_KEY}_drafts_${userId}`,
+        JSON.stringify(allDrafts)
+        );
+
+        return updated;
+    } catch (error) {
+        console.error('Error updating draft:', error);
+        throw error;
+    }
+    }
+
+    /**
+     * Convert draft to actual account (finalize account creation)
+     */
+    static async finalizeDraft(
+    draftId: string,
+    userId: string
+    ): Promise<Account> {
+    try {
+        const draft = await this.getDraftById(draftId, userId);
+        if (!draft) {
+        throw new Error('Draft not found');
+        }
+
+        // Create actual account from draft
+        const finalAccount = await this.createAccount(userId, draft);
+
+        // Delete draft
+        await this.deleteDraft(draftId, userId);
+
+        return finalAccount;
+    } catch (error) {
+        console.error('Error finalizing draft:', error);
+        throw error;
+    }
+    }
+
+    /**
+     * Delete draft account
+     */
+    static async deleteDraft(draftId: string, userId: string): Promise<void> {
+    try {
+        const allDrafts = await this.getAllDrafts(userId);
+        const filtered = allDrafts.filter(d => d.id !== draftId);
+
+        await AsyncStorage.setItem(
+        `${STORAGE_KEY}_drafts_${userId}`,
+        JSON.stringify(filtered)
+        );
+
+        console.log('✅ Draft deleted:', draftId);
+    } catch (error) {
+        console.error('Error deleting draft:', error);
+        throw error;
+    }
+    }
+
+    /**
+     * Get drafts by account type
+     */
+    static async getDraftsByType(
+    userId: string,
+    accountType: AccountType
+    ): Promise<Account[]> {
+    try {
+        const drafts = await this.getAllDrafts(userId);
+        return drafts.filter(d => d.accountType === accountType);
+    } catch (error) {
+        console.error('Error filtering drafts:', error);
+        return [];
+    }
+    }
+
   /**
    * Get all accounts for user
    */

@@ -1,5 +1,7 @@
-// src/screens/AddAccountScreen.tsx
-import React, { useState } from 'react';
+// FILE 3: src/screens/AddAccountScreen.tsx
+// COMPLETE REPLACEMENT
+
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,12 +10,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  TouchableOpacity,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../hooks/useTheme';
 import type { MainTabScreenProps } from '../types/navigation';
 import { Button, Input, Card } from '../components/common';
-import { PlatformSelector } from '../components/common/PlatformSelector';
+import { PlatformDropdown } from '../components/common/PlatformDropdown';
 import { Spacing, BorderRadius } from '../constants/spacing';
 import { Typography } from '../constants/typography';
 import {
@@ -29,23 +32,34 @@ import type {
   AccountType,
   CexPlatform,
   WalletType,
+  Account,
 } from '../types/account.types';
 
 // ============================================
-// ADD ACCOUNT SCREEN
+// ADD ACCOUNT SCREEN - COMPLETE FLOW
 // ============================================
 
 type Props = MainTabScreenProps<'AddAccount'>;
-type Step = 'type' | 'platform' | 'details' | 'credentials';
+type Step = 'typeSelect' | 'platformSelect' | 'details' | 'credentials' | 'confirmation';
+
+interface DraftList {
+  cex: Account[];
+  wallet: Account[];
+}
 
 export function AddAccountScreen() {
   const { colors } = useTheme();
   const navigation = useNavigation<Props['navigation']>();
 
-  // Form state
-  const [step, setStep] = useState<Step>('type');
-  const [accountType, setAccountType] = useState<AccountType | null>(null);
-  const [platform, setPlatform] = useState<CexPlatform | WalletType | null>(null);
+  // Flow state
+  const [step, setStep] = useState<Step>('typeSelect');
+  const [accountType, setAccountType] = useState<AccountType | undefined>(undefined);
+  const [draftList, setDraftList] = useState<DraftList>({ cex: [], wallet: [] });
+  const [userId, setUserId] = useState('');
+
+  // Account state
+  const [draftId, setDraftId] = useState<string | undefined>(undefined);
+  const [platform, setPlatform] = useState<CexPlatform | WalletType | undefined>(undefined);
   const [accountName, setAccountName] = useState('');
   const [description, setDescription] = useState('');
   const [walletAddress, setWalletAddress] = useState('');
@@ -53,39 +67,100 @@ export function AddAccountScreen() {
   const [apiSecret, setApiSecret] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
-  const [showPlatformSelector, setShowPlatformSelector] = useState(false);
 
-  // Step 1: Select Account Type
-  const accountTypes: { key: AccountType; label: string; icon: string }[] = [
-    { key: 'cex', label: ACCOUNT_TYPE_LABELS.cex, icon: '📊' },
-    { key: 'wallet', label: ACCOUNT_TYPE_LABELS.wallet, icon: '📱' },
-    { key: 'hardware_wallet', label: ACCOUNT_TYPE_LABELS.hardware_wallet, icon: '🔐' },
-    { key: 'defi_protocol', label: ACCOUNT_TYPE_LABELS.defi_protocol, icon: '🌐' },
-  ];
+  // Initialize user
+  useEffect(() => {
+    const initUser = async () => {
+      try {
+        const userRepo = getUserRepository();
+        const user = await userRepo.getOrCreateDefaultUser();
+        setUserId(user.id);
+      } catch (error) {
+        console.error('Error initializing user:', error);
+      }
+    };
+    initUser();
+  }, []);
 
-  const handleSelectAccountType = (type: AccountType) => {
-    setAccountType(type);
-    setStep('platform');
+  // Load drafts when account type changes
+  useEffect(() => {
+    if (accountType && userId) {
+      loadDrafts();
+    }
+  }, [accountType, userId]);
+
+  // Load draft accounts
+  const loadDrafts = async () => {
+    if (!userId || !accountType) return;
+    try {
+      const cexDrafts = await AccountService.getDraftsByType(userId, 'cex');
+      const walletDrafts = await AccountService.getDraftsByType(
+        userId,
+        accountType === 'wallet' ? 'wallet' : 'hardware_wallet'
+      );
+      setDraftList({
+        cex: accountType === 'cex' ? cexDrafts : [],
+        wallet: accountType === 'wallet' || accountType === 'hardware_wallet' ? walletDrafts : [],
+      });
+    } catch (error) {
+      console.error('Error loading drafts:', error);
+    }
   };
 
-  // Step 2: Select Platform
+  // Step 1: Select Account Type
+  const handleSelectAccountType = (type: AccountType) => {
+    setAccountType(type);
+    setStep('platformSelect');
+  };
+
+  // Step 2: Select Platform or Resume Draft
   const handleSelectPlatform = (selectedPlatform: CexPlatform | WalletType) => {
     setPlatform(selectedPlatform);
-    
-    // Auto-fill account name suggestion
-    const platformInfo =
-      accountType === 'cex'
-        ? CEX_PLATFORMS[selectedPlatform as CexPlatform]
-        : WALLET_TYPES[selectedPlatform as WalletType];
-    
+
+    // Auto-fill if this is the first time selecting this platform
     if (!accountName) {
+      const platformInfo =
+        accountType === 'cex'
+          ? CEX_PLATFORMS[selectedPlatform as CexPlatform]
+          : WALLET_TYPES[selectedPlatform as WalletType];
       setAccountName(`My ${platformInfo.name} Account`);
     }
-    
+
     setStep('details');
   };
 
-  // Step 3: Validate details form
+  const handleResumeDraft = (draft: Account) => {
+    setDraftId(draft.id);
+    setPlatform(draft.platform as CexPlatform | WalletType);
+    setAccountName(draft.accountName);
+    setDescription(draft.description || '');
+    setWalletAddress(draft.primaryAddress || '');
+    setStep('details');
+  };
+
+  const handleDeleteDraft = async (draft: Account) => {
+    Alert.alert(
+      'Delete Draft',
+      `Delete "${draft.accountName}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await AccountService.deleteDraft(draft.id, userId);
+              loadDrafts();
+            } catch (error) {
+              Alert.alert('Error', 'Failed to delete draft');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // Step 3: Validate & Save Details
   const validateDetailsForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
@@ -94,6 +169,10 @@ export function AddAccountScreen() {
     }
     if (accountName.length > ACCOUNT_VALIDATION.nameMaxLength) {
       newErrors.accountName = `Name must be ${ACCOUNT_VALIDATION.nameMaxLength} characters or less`;
+    }
+
+    if (!platform) {
+      newErrors.platform = 'Platform must be selected';
     }
 
     if (accountType === 'wallet' || accountType === 'hardware_wallet') {
@@ -106,52 +185,81 @@ export function AddAccountScreen() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleDetailsNext = () => {
+  const handleDetailsNext = async () => {
     if (!validateDetailsForm()) return;
-    
-    // If wallet, we can skip credentials and save
-    if (accountType === 'wallet' || accountType === 'hardware_wallet') {
-      handleSaveAccount();
-    } else {
-      setStep('credentials');
+
+    try {
+      // Save or update draft
+      if (draftId) {
+        await AccountService.updateDraft(draftId, userId, {
+          accountName,
+          description: description || undefined,
+          primaryAddress: walletAddress || undefined,
+          platform,
+        });
+      } else {
+        const draft = await AccountService.saveDraftAccount(userId, {
+          accountType: accountType!,
+          accountName,
+          description: description || undefined,
+          platform,
+          primaryAddress: walletAddress || undefined,
+          baseCurrency: 'USD',
+        });
+        setDraftId(draft.id);
+      }
+
+      // Skip credentials for wallet types
+      if (accountType === 'wallet' || accountType === 'hardware_wallet') {
+        await handleSaveAccount();
+      } else {
+        setStep('credentials');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to save account details');
+      console.error('Error:', error);
     }
   };
 
-  // Step 4: Save account
+  // Step 4: Add CEX Credentials
+  const handleCredentialsNext = async () => {
+    if (accountType === 'cex' && !apiKey) {
+      setErrors({ apiKey: 'API Key is required for CEX accounts' });
+      return;
+    }
+    setErrors({});
+    setStep('confirmation');
+  };
+
+  // Step 5: Finalize Account
   const handleSaveAccount = async () => {
     setLoading(true);
     try {
-      const userRepo = getUserRepository();
-      const user = await userRepo.getOrCreateDefaultUser();
+      if (!draftId) throw new Error('No draft found');
 
-      // Create account
-      const newAccount = await AccountService.createAccount(user.id, {
-        accountType: accountType!,
-        accountName,
-        description: description || undefined,
-        platform: platform!,
-        primaryAddress: walletAddress || undefined,
-        baseCurrency: user.baseCurrency,
-        autoSyncEnabled: false,
-      });
+      // Finalize draft to actual account
+      const newAccount = await AccountService.finalizeDraft(draftId, userId);
 
-      // Add credentials if CEX
+      // Add credentials if CEX with API key
       if (accountType === 'cex' && apiKey) {
-        await AccountService.addCredential(
-          newAccount.id,
-          user.id,
-          'api_key',
-          apiKey
-        );
-
+        await AccountService.addCredential(newAccount.id, userId, 'api_key', apiKey);
         if (apiSecret) {
           await AccountService.addCredential(
             newAccount.id,
-            user.id,
+            userId,
             'private_key',
             apiSecret
           );
         }
+      }
+
+      // Update connection status to connected if credentials added
+      if (apiKey || walletAddress) {
+        await AccountService.updateSyncStatus(
+          newAccount.id,
+          userId,
+          'connected'
+        );
       }
 
       Alert.alert(
@@ -160,7 +268,20 @@ export function AddAccountScreen() {
         [
           {
             text: 'OK',
-            onPress: () => navigation.goBack(),
+            onPress: () => {
+              // Reset state
+              setStep('typeSelect');
+              setAccountType(undefined);      // ✅ Change from null
+              setDraftId(undefined);           // ✅ Change from null
+              setPlatform(undefined);          // ✅ Change from null
+              setAccountName('');
+              setDescription('');
+              setWalletAddress('');
+              setApiKey('');
+              setApiSecret('');
+              setErrors({});
+              navigation.goBack();
+            },
           },
         ]
       );
@@ -175,23 +296,23 @@ export function AddAccountScreen() {
     }
   };
 
-  // Render Step 1: Account Type Selection
+  // RENDER FUNCTIONS
   const renderTypeSelection = () => (
     <View style={styles.stepContent}>
       <Text style={[styles.stepTitle, { color: colors.text }]}>
         Select Account Type
       </Text>
       <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-        Choose the type of account you want to add
+        Choose what you want to track
       </Text>
 
       <View style={styles.optionsGrid}>
-        {accountTypes.map((type) => (
-          <Card
-            key={type.key}
-            noPadding
-            style={{ marginBottom: Spacing.md }}
-          >
+        {[
+          { key: 'cex' as AccountType, label: ACCOUNT_TYPE_LABELS.cex, icon: '📊' },
+          { key: 'wallet' as AccountType, label: ACCOUNT_TYPE_LABELS.wallet, icon: '📱' },
+          { key: 'hardware_wallet' as AccountType, label: ACCOUNT_TYPE_LABELS.hardware_wallet, icon: '🔐' },
+        ].map((type) => (
+          <Card key={type.key} noPadding style={{ marginBottom: Spacing.md }}>
             <Button
               title={`${type.icon}  ${type.label}`}
               onPress={() => handleSelectAccountType(type.key)}
@@ -207,64 +328,96 @@ export function AddAccountScreen() {
     </View>
   );
 
-  // Render Step 2: Platform Selection
+  const getDraftsForCurrentType = (): Account[] => {
+    if (!accountType) return [];
+    return accountType === 'cex' ? draftList.cex : draftList.wallet;
+  };
+
+  const currentDrafts = getDraftsForCurrentType();
+
   const renderPlatformSelection = () => (
     <View style={styles.stepContent}>
       <Text style={[styles.stepTitle, { color: colors.text }]}>
         Select {accountType === 'cex' ? 'Exchange' : 'Wallet'}
       </Text>
       <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-        Choose your {accountType === 'cex' ? 'exchange platform' : 'wallet type'}
+        Choose your {accountType === 'cex' ? 'exchange' : 'wallet'} platform
       </Text>
 
-    <Button
-        title={
-          platform && accountType
-            ? `${
-                accountType === 'cex'
-                  ? CEX_PLATFORMS[platform as CexPlatform]?.logo || ''
-                  : WALLET_TYPES[platform as WalletType]?.logo || ''
-              }  ${
-                accountType === 'cex'
-                  ? CEX_PLATFORMS[platform as CexPlatform]?.name || platform
-                  : WALLET_TYPES[platform as WalletType]?.name || platform
-              }`
-            : 'Choose Platform'
-        }
-        onPress={() => setShowPlatformSelector(true)}
-        variant="outline"
-        fullWidth
-      />
-
-
-      {platform && (
-        <View style={{ marginTop: Spacing.xl }}>
-          <Button
-            title="Next"
-            onPress={() => setStep('details')}
-            fullWidth
-          />
+      {/* Previous/Draft Accounts */}
+      {currentDrafts.length > 0 && (
+        <View>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            In Progress
+          </Text>
+          {currentDrafts.map((draft) => (
+            <Card key={draft.id} style={{ marginBottom: Spacing.md }}>
+              <View style={styles.draftItem}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.draftName, { color: colors.text }]}>
+                    {draft.accountName}
+                  </Text>
+                  {draft.platform && (
+                    <Text style={[styles.draftPlatform, { color: colors.textSecondary }]}>
+                      {accountType === 'cex'
+                        ? CEX_PLATFORMS[draft.platform as CexPlatform]?.name
+                        : WALLET_TYPES[draft.platform as WalletType]?.name}
+                    </Text>
+                  )}
+                </View>
+                <View style={styles.draftActions}>
+                  <Button
+                    title="Resume"
+                    onPress={() => handleResumeDraft(draft)}
+                    variant="secondary"
+                    size="sm"
+                    style={{ marginRight: Spacing.sm }}
+                  />
+                  <Button
+                    title="Delete"
+                    onPress={() => handleDeleteDraft(draft)}
+                    variant="outline"
+                    size="sm"
+                  />
+                </View>
+              </View>
+            </Card>
+          ))}
+          <Text style={[styles.dividerText, { color: colors.textSecondary }]}>
+            or start new
+          </Text>
         </View>
       )}
 
-      <PlatformSelector
-        visible={showPlatformSelector}
-        onClose={() => setShowPlatformSelector(false)}
-        onSelect={handleSelectPlatform}
+      {/* Platform Selection Dropdown */}
+      <PlatformDropdown
         type={accountType === 'cex' ? 'cex' : 'wallet'}
-        selectedPlatform={platform || undefined}
+        value={platform}
+        onChange={handleSelectPlatform}
+        label="Select Platform"
+      />
+
+      {/* Back Button */}
+      <Button
+        title="← Back"
+        onPress={() => {
+          setAccountType(undefined);
+          setStep('typeSelect');
+        }}
+        variant="ghost"
+        fullWidth
+        style={{ marginTop: Spacing.lg }}
       />
     </View>
   );
 
-  // Render Step 3: Account Details
   const renderDetailsForm = () => (
     <View style={styles.stepContent}>
       <Text style={[styles.stepTitle, { color: colors.text }]}>
         Account Details
       </Text>
       <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-        Provide information about your account
+        Fill in your account information
       </Text>
 
       <Input
@@ -298,16 +451,26 @@ export function AddAccountScreen() {
       )}
 
       <Button
-        title={accountType === 'cex' ? 'Next' : 'Save Account'}
+        title={accountType === 'cex' ? 'Next' : 'Confirm & Save'}
         onPress={handleDetailsNext}
         loading={loading}
         disabled={loading}
         fullWidth
       />
+
+      <Button
+        title="← Back"
+        onPress={() => {
+          setPlatform(undefined);
+          setStep('platformSelect');
+        }}
+        variant="ghost"
+        fullWidth
+        style={{ marginTop: Spacing.md }}
+      />
     </View>
   );
 
-  // Render Step 4: Credentials (CEX only)
   const renderCredentialsForm = () => {
     const requirements = platform
       ? CREDENTIAL_REQUIREMENTS[platform as keyof typeof CREDENTIAL_REQUIREMENTS] || []
@@ -316,10 +479,10 @@ export function AddAccountScreen() {
     return (
       <View style={styles.stepContent}>
         <Text style={[styles.stepTitle, { color: colors.text }]}>
-          API Credentials
+          API Credentials (Optional)
         </Text>
         <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-          Connect your exchange account securely (Optional - can be added later)
+          Add API credentials for automatic balance syncing
         </Text>
 
         {requirements.length > 0 && (
@@ -357,16 +520,16 @@ export function AddAccountScreen() {
         />
 
         <Button
-          title="Save Account"
-          onPress={handleSaveAccount}
+          title="Confirm & Save Account"
+          onPress={handleCredentialsNext}
           loading={loading}
           disabled={loading}
           fullWidth
         />
 
         <Button
-          title="Skip for Now"
-          onPress={handleSaveAccount}
+          title="← Back"
+          onPress={() => setStep('details')}
           variant="ghost"
           fullWidth
           style={{ marginTop: Spacing.md }}
@@ -374,6 +537,53 @@ export function AddAccountScreen() {
       </View>
     );
   };
+
+  const renderConfirmation = () => (
+    <View style={styles.stepContent}>
+      <Text style={[styles.stepTitle, { color: colors.text }]}>
+        Review & Save
+      </Text>
+
+      <Card style={{ marginBottom: Spacing.lg }}>
+        <Text style={[styles.reviewLabel, { color: colors.textSecondary }]}>
+          Account Type
+        </Text>
+        <Text style={[styles.reviewValue, { color: colors.text }]}>
+          {accountType ? ACCOUNT_TYPE_LABELS[accountType] : 'N/A'}
+        </Text>
+
+        <Text style={[styles.reviewLabel, { color: colors.textSecondary, marginTop: Spacing.md }]}>
+          Platform
+        </Text>
+        <Text style={[styles.reviewValue, { color: colors.text }]}>
+          {platform || 'N/A'}
+        </Text>
+
+        <Text style={[styles.reviewLabel, { color: colors.textSecondary, marginTop: Spacing.md }]}>
+          Account Name
+        </Text>
+        <Text style={[styles.reviewValue, { color: colors.text }]}>
+          {accountName}
+        </Text>
+      </Card>
+
+      <Button
+        title="Save Account"
+        onPress={handleSaveAccount}
+        loading={loading}
+        disabled={loading}
+        fullWidth
+      />
+
+      <Button
+        title="← Back"
+        onPress={() => setStep(accountType === 'cex' ? 'credentials' : 'details')}
+        variant="ghost"
+        fullWidth
+        style={{ marginTop: Spacing.md }}
+      />
+    </View>
+  );
 
   return (
     <KeyboardAvoidingView
@@ -383,20 +593,24 @@ export function AddAccountScreen() {
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         {/* Progress Indicator */}
         <View style={[styles.progressBar, { backgroundColor: colors.surface }]}>
-          {['type', 'platform', 'details', 'credentials'].map((s, idx) => (
-            <View
-              key={s}
-              style={[
-                styles.progressDot,
-                {
-                  backgroundColor:
-                    ['type', 'platform', 'details', 'credentials'].indexOf(step) >= idx
-                      ? colors.primary
-                      : colors.border,
-                },
-              ]}
-            />
-          ))}
+          {(['typeSelect', 'platformSelect', 'details', 'credentials', 'confirmation'] as Step[]).map(
+            (s, idx) => (
+              <View
+                key={s}
+                style={[
+                  styles.progressDot,
+                  {
+                    backgroundColor:
+                      ['typeSelect', 'platformSelect', 'details', 'credentials', 'confirmation'].indexOf(
+                        step
+                      ) >= idx
+                        ? colors.primary
+                        : colors.border,
+                  },
+                ]}
+              />
+            )
+          )}
         </View>
 
         <ScrollView
@@ -404,27 +618,12 @@ export function AddAccountScreen() {
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
-          {step === 'type' && renderTypeSelection()}
-          {step === 'platform' && renderPlatformSelection()}
+          {step === 'typeSelect' && renderTypeSelection()}
+          {step === 'platformSelect' && renderPlatformSelection()}
           {step === 'details' && renderDetailsForm()}
           {step === 'credentials' && renderCredentialsForm()}
+          {step === 'confirmation' && renderConfirmation()}
         </ScrollView>
-
-        {/* Back Button */}
-        {step !== 'type' && (
-          <View style={[styles.footer, { backgroundColor: colors.surface }]}>
-            <Button
-              title="← Back"
-              onPress={() => {
-                if (step === 'platform') setStep('type');
-                else if (step === 'details') setStep('platform');
-                else if (step === 'credentials') setStep('details');
-              }}
-              variant="ghost"
-              fullWidth
-            />
-          </View>
-        )}
       </View>
     </KeyboardAvoidingView>
   );
@@ -465,8 +664,35 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
     lineHeight: Typography.lineHeight.relaxed * Typography.fontSize.base,
   },
+  sectionTitle: {
+    fontSize: Typography.fontSize.lg,
+    fontWeight: Typography.fontWeight.semibold,
+    marginBottom: Spacing.md,
+    marginTop: Spacing.lg,
+  },
   optionsGrid: {
     gap: Spacing.md,
+  },
+  draftItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  draftName: {
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.semibold,
+    marginBottom: Spacing.xs,
+  },
+  draftPlatform: {
+    fontSize: Typography.fontSize.sm,
+  },
+  draftActions: {
+    flexDirection: 'row',
+  },
+  dividerText: {
+    textAlign: 'center',
+    fontSize: Typography.fontSize.sm,
+    marginVertical: Spacing.lg,
   },
   requirementsTitle: {
     fontSize: Typography.fontSize.base,
@@ -477,9 +703,12 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.sm,
     marginBottom: Spacing.xs,
   },
-  footer: {
-    padding: Spacing.base,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(128, 128, 128, 0.1)',
+  reviewLabel: {
+    fontSize: Typography.fontSize.sm,
+  },
+  reviewValue: {
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.semibold,
+    marginTop: Spacing.xs,
   },
 });
