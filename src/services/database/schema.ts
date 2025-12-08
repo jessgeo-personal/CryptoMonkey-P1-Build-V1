@@ -200,6 +200,59 @@ CREATE TABLE IF NOT EXISTS exchange_rates (
 CREATE INDEX IF NOT EXISTS idx_exchange_rates_date ON exchange_rates(from_currency, to_currency, date DESC);
 
 -- ============================================
+-- TOKENS REGISTRY TABLE (NEW - Phase 4B)
+-- ============================================
+CREATE TABLE IF NOT EXISTS tokens (
+  id TEXT PRIMARY KEY,
+  symbol TEXT NOT NULL,
+  name TEXT NOT NULL,
+  network TEXT NOT NULL,
+  contract_address TEXT,
+  decimals INTEGER NOT NULL DEFAULT 18,
+  category TEXT NOT NULL DEFAULT 'cryptocurrency',
+  is_stablecoin INTEGER NOT NULL DEFAULT 0,
+  is_primary INTEGER NOT NULL DEFAULT 0,
+  logo_url TEXT,
+  color TEXT,
+  is_active INTEGER NOT NULL DEFAULT 1,
+  is_custom INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  
+  CONSTRAINT valid_category CHECK (
+    category IN ('cryptocurrency', 'stablecoin', 'nft', 'defi', 'utility', 'custom')
+  ),
+  CONSTRAINT unique_token UNIQUE (symbol, network, contract_address)
+);
+
+CREATE INDEX IF NOT EXISTS idx_tokens_symbol ON tokens(symbol);
+CREATE INDEX IF NOT EXISTS idx_tokens_network ON tokens(network);
+CREATE INDEX IF NOT EXISTS idx_tokens_active ON tokens(is_active);
+
+-- ============================================
+-- ACCOUNT TOKENS TABLE (NEW - Phase 4B)
+-- Links tokens to accounts for tracking
+-- ============================================
+CREATE TABLE IF NOT EXISTS account_tokens (
+  id TEXT PRIMARY KEY,
+  account_id TEXT NOT NULL,
+  token_id TEXT NOT NULL,
+  is_enabled INTEGER NOT NULL DEFAULT 1,
+  custom_label TEXT,
+  priority INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  
+  FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE,
+  FOREIGN KEY (token_id) REFERENCES tokens(id) ON DELETE CASCADE,
+  CONSTRAINT unique_account_token UNIQUE (account_id, token_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_account_tokens_account ON account_tokens(account_id);
+CREATE INDEX IF NOT EXISTS idx_account_tokens_token ON account_tokens(token_id);
+CREATE INDEX IF NOT EXISTS idx_account_tokens_enabled ON account_tokens(account_id, is_enabled);
+
+-- ============================================
 -- SCHEMA VERSION TABLE
 -- ============================================
 CREATE TABLE IF NOT EXISTS schema_version (
