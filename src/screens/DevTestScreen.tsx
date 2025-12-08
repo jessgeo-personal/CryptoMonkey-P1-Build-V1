@@ -14,6 +14,7 @@ import { getUserRepository } from '../services/database/repositories/UserReposit
 import { getTransactionRepository } from '../services/database/repositories/TransactionRepository';
 import { getHoldingRepository } from '../services/database/repositories/HoldingRepository';
 import { seedTestData, clearAllData } from '../services/seedData';
+import { AccountService } from '../services/accountService';
 
 // ============================================
 // DEVELOPER TEST SCREEN
@@ -197,6 +198,28 @@ export function DevTestScreen() {
       console.error('View holdings error:', error);
       Alert.alert('Error', 'Failed to view holdings');
     }
+  };
+  
+  /**
+   * Test Account creation
+   */
+  const testCreateAccount = async () => {
+    const account = await AccountService.createAccount('user123', {
+      accountType: 'wallet',
+      accountName: 'My Ethereum Wallet',
+      primaryAddress: '0x1234567890123456789012345678901234567890',
+      baseCurrency: 'USD',
+    });
+    console.log('✓ Account created:', account.id);
+  };
+  const testAddCredential = async () => {
+    await AccountService.addCredential(
+      accountId,
+      'user123',
+      'wallet_address',
+      '0x1234567890123456789012345678901234567890'
+    );
+    console.log('✓ Credential added');
   };
 
   // Refresh stats on mount

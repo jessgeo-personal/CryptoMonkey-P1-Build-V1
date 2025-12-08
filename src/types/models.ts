@@ -130,6 +130,7 @@ export interface Holding {
   // Location
   location: LocationType;
   locationId: string;
+  accountId?: string; // NEW: Reference to Account for multi-account tracking
   network?: NetworkType;
   
   // Cost basis (multi-currency)
