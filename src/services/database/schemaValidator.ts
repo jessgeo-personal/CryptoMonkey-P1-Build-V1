@@ -84,14 +84,17 @@ class SchemaValidator {
     try {
       const db = DatabaseService.getInstance().getDatabase();
 
-      // Check tokens table columns
-      const tokensInfo = await db.allAsync('PRAGMA table_info(tokens)');
+      // Check tokens table columns using PRAGMA
+      const tokensInfo = await db.getAllAsync<{ name: string }>(
+        'PRAGMA table_info(tokens)'
+      );
       const tokensColumns = tokensInfo.map((col: any) => col.name);
 
-      // Check account_tokens table columns
-      const accountTokensInfo = await db.allAsync('PRAGMA table_info(account_tokens)');
+      // Check account_tokens table columns using PRAGMA
+      const accountTokensInfo = await db.getAllAsync<{ name: string }>(
+        'PRAGMA table_info(account_tokens)'
+      );
       const accountTokensColumns = accountTokensInfo.map((col: any) => col.name);
-
       // Validate required columns
       const requiredTokensColumns = [
         'id',
